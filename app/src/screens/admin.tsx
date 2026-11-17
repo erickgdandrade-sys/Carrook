@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, Link } from 'react-router-dom'
 import { ChartLineUp, Kanban, Storefront, Users, Crown, ArrowLeft, ArrowRight, MagnifyingGlass, Plus, type Icon } from '@phosphor-icons/react'
 import { PLANS, SERVICES, img, type PlanId, type ServiceKey } from '../data'
-import { STATUS_FLOW, STATUS_LABEL, SUBSCRIBERS, brl, recommendScore, uid, useStore, type BookingStatus } from '../store'
+import { STATUS_FLOW, STATUS_LABEL, SUBSCRIBERS, brl, recommendScore, uid, useStore, type BookingStatus, type Role } from '../store'
+import { listProfiles, setAccess } from '../live'
 import { Btn, LogoMark, Seal, Stars, ThemeSwitch, Wordmark, fmtDate } from '../ui'
 import { StatusChip } from './bookings'
 
@@ -34,7 +35,13 @@ const Example = () => <span className="rounded-md bg-surface px-2 py-1 text-xs f
 
 export function AdminDashboard() {
   const s = useStore()
-  const mix: [PlanId, number][] = [['clube', 512], ['start', 604], ['premium', 168]]
+  const [accounts, setAccounts] = useState<Awaited<ReturnType<typeof listProfiles>> | null>(null)
+  useEffect(() => { if (s.mode === 'live') listProfiles().then(setAccounts) }, [s.mode])
+  const live = s.mode === 'live' && accounts
+  const mix: [PlanId, number][] = live ? (['clube', 'start', 'premium'] as PlanId[]).map(p => [p, accounts!.filter(a => a.role === 'cliente' && a.plan === p).length]) : [['clube', 512], ['start', 604], ['premium', 168]]
+  const subsTotal = mix.reduce((a, [, n]) => a + n, 0)
+  const monthBookings = s.bookings.filter(b => new Date(b.createdAt).getMonth() === new Date().getMonth()).length
+  const savedTotal = s.bookings.filter(b => b.status !== 'cancelado').reduce((a, b) => a + (b.base - b.price), 0)
   const mrr = mix.reduce((a, [p, n]) => a + s.planPrices[p] * n, 0)
   const months = ['jun', 'jul', 'ago', 'set', 'out', 'nov']
   const series = [61, 74, 88, 101, 119, Math.round(mrr / 1000)]
@@ -42,9 +49,10 @@ export function AdminDashboard() {
   const today = s.bookings.filter(b => !['concluido', 'cancelado'].includes(b.status)).slice(0, 6)
   return (
     <div>
-      <H title="Visão geral" sub={new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })} right={<Example />} />
+      <H title="Visão geral" sub={new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })} right={live ? undefined : <Example />} />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {[['Assinantes ativos', '1.284', '+86 no mês'], ['Receita recorrente', brl(mrr).replace(',00', ''), '+15,8% vs. outubro'], ['Agendamentos no mês', '412', '+38 na semana'], ['Economia gerada', 'R$ 218 mil', 'para os assinantes']].map(([t, v, d], i) => (
+        {(live ? [['Assinantes', String(subsTotal), `${accounts!.length} contas no total`], ['Receita recorrente', brl(mrr).replace(',00', ''), 'pelos planos atuais'], ['Agendamentos no mês', String(monthBookings), `${s.bookings.length} no total`], ['Economia gerada', brl(savedTotal).replace(',00', ''), 'para os assinantes']]
+          : [['Assinantes ativos', '1.284', '+86 no mês'], ['Receita recorrente', brl(mrr).replace(',00', ''), '+15,8% vs. outubro'], ['Agendamentos no mês', '412', '+38 na semana'], ['Economia gerada', 'R$ 218 mil', 'para os assinantes']]).map(([t, v, d], i) => (
           <div key={t} className={`rounded-3xl p-5 ${i === 1 ? 'bg-royal text-white' : 'bg-surface'}`}>
             <p className={`text-[12px] font-semibold uppercase tracking-[.08em] ${i === 1 ? 'text-white/70' : 'text-muted'}`}>{t}</p>
             <p className="mt-2 text-[28px] font-extrabold tabular-nums leading-none">{v}</p>
@@ -64,7 +72,7 @@ export function AdminDashboard() {
         </section>
         <section className="rounded-3xl bg-surface p-5">
           <h2 className="font-semibold">Assinantes por plano</h2>
-          <div className="mt-5 flex h-4 overflow-hidden rounded-full">{mix.map(([p, n], i) => <span key={p} style={{ width: `${n / 12.84}%` }} className={['bg-lime', 'bg-royal', 'bg-slate'][i]} />)}</div>
+          <div className="mt-5 flex h-4 overflow-hidden rounded-full">{mix.map(([p, n], i) => <span key={p} style={{ width: `${subsTotal ? (n / subsTotal) * 100 : 0}%` }} className={['bg-lime', 'bg-royal', 'bg-slate'][i]} />)}</div>
           <ul className="mt-5 grid gap-3">{mix.map(([p, n], i) => <li key={p} className="flex items-center gap-3"><span className={`h-3 w-3 rounded-full ${['bg-lime', 'bg-royal', 'bg-slate'][i]}`} /><span className="flex-1">{PLANS.find(x => x.id === p)!.name}</span><b className="tabular-nums">{n}</b><span className="w-24 text-right text-sm tabular-nums text-muted">{brl(n * s.planPrices[p]).replace(',00', '')}</span></li>)}</ul>
         </section>
       </div>
@@ -177,6 +185,44 @@ export function AdminShops() {
 }
 
 export function AdminSubscribers() {
+  const mode = useStore(s => s.mode)
+  return mode === 'live' ? <LiveAccounts /> : <DemoSubscribers />
+}
+
+/* Contas reais: a equipe define o perfil de acesso de cada uma */
+function LiveAccounts() {
+  const s = useStore()
+  const [rows, setRows] = useState<Awaited<ReturnType<typeof listProfiles>> | null>(null)
+  const [q, setQ] = useState('')
+  useEffect(() => { listProfiles().then(setRows) }, [])
+  const list = (rows ?? []).filter(r => `${r.name} ${r.email}`.toLowerCase().includes(q.toLowerCase()))
+  const change = async (id: string, role: Role, shop: string | null) => {
+    if (id === s.userId && role !== 'admin') { s.say('Você não pode tirar o seu próprio acesso de equipe.'); return }
+    if (await setAccess(id, role, shop)) { s.say('Perfil de acesso atualizado'); setRows(await listProfiles()) }
+  }
+  return (
+    <div>
+      <H title="Contas" sub={rows ? `${rows.length} contas cadastradas` : 'Carregando…'} />
+      <label className="relative mb-4 block"><MagnifyingGlass size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" /><input id="acc-q" className="field pl-11" placeholder="Buscar por nome ou e-mail" value={q} onChange={e => setQ(e.target.value)} aria-label="Buscar conta" /></label>
+      <div className="overflow-x-auto rounded-3xl bg-surface p-2">
+        <table className="w-full min-w-[820px] text-sm">
+          <thead><tr className="text-left text-xs uppercase tracking-wider text-muted"><th className="p-3 font-semibold">Nome</th><th className="font-semibold">E-mail</th><th className="font-semibold">Plano</th><th className="font-semibold">Veículos</th><th className="font-semibold">Desde</th><th className="font-semibold">Perfil de acesso</th><th className="font-semibold">Oficina</th></tr></thead>
+          <tbody>{list.map(r => (
+            <tr key={r.id} className="border-t border-line">
+              <td className="p-3 font-medium">{r.name || '—'}{r.id === s.userId && <span className="ml-1 text-xs text-muted">(você)</span>}</td><td className="text-muted">{r.email}</td>
+              <td>{PLANS.find(p => p.id === r.plan)?.short}</td><td className="tabular-nums">{r.vehicles}</td><td>{fmtDate(r.created_at, { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+              <td><select id={`role-${r.id}`} className="h-9 rounded-xl border border-line bg-surface px-2" value={r.role} onChange={e => change(r.id, e.target.value as Role, r.shop_id ?? s.shops[0]?.id ?? null)} aria-label={`Perfil de ${r.name}`}><option value="cliente">Assinante</option><option value="oficina">Oficina</option><option value="admin">Equipe Carrook</option></select></td>
+              <td>{r.role === 'oficina' ? <select id={`shop-${r.id}`} className="h-9 max-w-[180px] rounded-xl border border-line bg-surface px-2" value={r.shop_id ?? ''} onChange={e => change(r.id, 'oficina', e.target.value)} aria-label={`Oficina de ${r.name}`}>{s.shops.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select> : <span className="text-muted">—</span>}</td>
+            </tr>))}
+            {rows && !list.length && <tr><td colSpan={7} className="p-6 text-center text-muted">Nenhuma conta encontrada.</td></tr>}</tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-xs text-muted">Quem vira “Oficina” passa a ver o portal da oficina escolhida. Quem vira “Equipe Carrook” passa a ver este painel.</p>
+    </div>
+  )
+}
+
+function DemoSubscribers() {
   const prices = useStore(s => s.planPrices)
   const [q, setQ] = useState('')
   const [plan, setPlan] = useState<PlanId | 'todos'>('todos')

@@ -34,7 +34,26 @@ npm run build    # gera app/dist
 - **Landing page de vendas** (`#/site`), **termos de uso** e **política de privacidade** (modelos para revisão jurídica), **esqueci a senha**, **editar veículo** e **blog**
 - **Painel admin** (`#/admin`), com funil do mês e retenção: visão geral, quadro de agendamentos (avançar o status muda a tela do cliente), oficinas (credenciar e ajustar desconto), assinantes e planos (preço e limite de veículos)
 
-Os dados são de exemplo e ficam salvos no navegador. O próximo passo é ligar um backend (ex.: Supabase para autenticação e banco) e um gateway de pagamento com Pix e cartão.
+### Backend (Supabase)
+
+A plataforma tem dois modos:
+- **Conta real:** cadastro, login e recuperação de senha pelo Supabase Auth. Perfis, veículos, agendamentos, notificações, oficinas e planos ficam no banco (projeto `Carrook`, região São Paulo), e as mudanças de status e orçamento chegam **em tempo real**.
+- **Demonstração:** "Ver demonstração com dados de exemplo" na tela de boas-vindas. Os dados ficam só no navegador.
+
+Segurança: todas as tabelas têm RLS. O assinante só vê os próprios dados; a oficina vê os agendamentos dela; a equipe vê tudo. Só a equipe muda o perfil de acesso de uma conta (tela **Admin → Assinantes**).
+
+Tabelas: `profiles`, `plans`, `shops`, `vehicles`, `bookings`, `notices`. A chave usada no app (`app/src/live.ts`) é a chave **publicável**, feita para ficar no navegador.
+
+**Configuração no painel do Supabase** (Authentication → URL Configuration):
+- Site URL: `https://erickgdandrade-sys.github.io/Carrook/`
+- Redirect URLs: `https://erickgdandrade-sys.github.io/Carrook/**` e `http://localhost:5173/**`
+
+**Primeiro admin:** crie sua conta pelo app e rode no SQL Editor do Supabase:
+```sql
+update public.profiles set role = 'admin' where email = 'seu@email.com';
+```
+
+Ainda simulados: pagamentos (próximo passo: gateway com Pix e cartão), push/WhatsApp e consulta de placa.
 
 Fotos: [Unsplash](https://unsplash.com/license) (licença livre).
 

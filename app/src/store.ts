@@ -30,7 +30,7 @@ const ahead = (d: number) => new Date(Date.now() + d * DAY).toISOString()
 export const daysSince = (iso: string) => Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / DAY))
 export const brl = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 export const fmtKm = (v: number) => `${Math.round(v).toLocaleString('pt-BR')} km`
-export const uid = () => Math.random().toString(36).slice(2, 9)
+export const uid = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto) ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, () => Math.floor(Math.random() * 16).toString(16))
 
 /* ---------- Seeds ---------- */
 const lastAll = (km: number, date: string, over: Partial<Record<ItemKey, { km: number; date: string }>> = {}) =>
@@ -72,8 +72,12 @@ export const SUBSCRIBERS: Subscriber[] = NAMES.map((n, i) => ({
 }))
 
 /* ---------- Store ---------- */
-interface State {
+export type Mode = 'demo' | 'live'
+export interface State {
   signedIn: boolean
+  mode: Mode
+  userId?: string
+  shopId?: string
   role: Role
   planSince: string
   theme: Theme
@@ -103,6 +107,7 @@ interface State {
   saveReport: (id: string, r: Record<string, ReportMark>) => void
   updateVehicle: (id: string, p: Partial<Vehicle>) => void
   reset: () => void
+  enterDemo: (r: Role) => void
 }
 
 const safeStorage: StateStorage = {
@@ -111,8 +116,11 @@ const safeStorage: StateStorage = {
   removeItem: k => { try { localStorage.removeItem(k) } catch { /* */ } },
 }
 
-const initial = () => ({
+export const initial = () => ({
   signedIn: false,
+  mode: 'demo' as Mode,
+  userId: undefined as string | undefined,
+  shopId: undefined as string | undefined,
   role: 'cliente' as Role,
   planSince: ago(200),
   theme: 'system' as Theme,
@@ -138,7 +146,7 @@ export const useStore = create<State>()(persist((set, get) => ({
   say: msg => { set({ toast: msg }); clearTimeout(toastTimer); toastTimer = window.setTimeout(() => set({ toast: null }), 2800) },
   updateKm: (id, km) => set(s => ({ vehicles: s.vehicles.map(v => v.id === id ? { ...v, km, kmUpdatedAt: new Date().toISOString() } : v) })),
   addVehicle: v => {
-    const id = 'v' + uid()
+    const id = uid()
     const date = new Date().toISOString()
     set(s => ({ vehicles: [...s.vehicles, { ...v, id, kmUpdatedAt: date, avgKmDay: 30, last: lastAll(v.km, date) }], activeVehicle: id }))
     return id
@@ -148,11 +156,11 @@ export const useStore = create<State>()(persist((set, get) => ({
     return { vehicles, activeVehicle: s.activeVehicle === id ? vehicles[0]?.id ?? '' : s.activeVehicle }
   }),
   book: b => {
-    const id = 'b' + uid()
+    const id = uid()
     const shop = get().shops.find(x => x.id === b.shopId)
     const svc = SERVICES[b.service]
     set(s => ({
-      bookings: [{ ...b, id, status: 'agendado', customer: s.user.name, createdAt: new Date().toISOString() }, ...s.bookings],
+      bookings: [{ ...b, id, status: 'agendado', customer: `${s.user.name} · ${s.vehicles.find(v => v.id === b.vehicleId)?.model ?? ''}`, createdAt: new Date().toISOString() }, ...s.bookings],
       yearlyUsed: svc.includedYearly && b.price === 0 ? { ...s.yearlyUsed, [b.service]: true } : s.yearlyUsed,
       notices: [{ id: uid(), kind: 'agenda', title: `${svc.short} agendado`, body: `${shop?.name} · ${new Date(b.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}, ${b.time}`, date: new Date().toISOString(), read: false, to: '/agendamentos/' + id }, ...s.notices],
     }))
@@ -160,7 +168,8 @@ export const useStore = create<State>()(persist((set, get) => ({
   },
   setStatus: (id, status) => set(s => {
     const b = s.bookings.find(x => x.id === id)
-    const mine = b && b.vehicleId !== '-'
+    // no modo real, as notificações vêm do banco (gatilho)
+    const mine = b && b.vehicleId !== '-' && s.mode === 'demo'
     const label: Record<BookingStatus, string> = { agendado: 'Agendado', recebido: 'Carro recebido na oficina', diagnostico: 'Em diagnóstico', servico: 'Serviço em andamento', pronto: 'Pronto para retirar', concluido: 'Serviço concluído', cancelado: 'Agendamento cancelado' }
     // ao concluir, atualiza o histórico de manutenção do veículo
     let vehicles = s.vehicles
@@ -183,7 +192,7 @@ export const useStore = create<State>()(persist((set, get) => ({
   readAll: () => set(s => ({ notices: s.notices.map(n => ({ ...n, read: true })) })),
   proposeExtra: (id, desc, value) => set(s => {
     const b = s.bookings.find(x => x.id === id)
-    const mine = b && b.vehicleId !== '-'
+    const mine = b && b.vehicleId !== '-' && s.mode === 'demo'
     return {
       bookings: s.bookings.map(x => x.id === id ? { ...x, extra: { desc, value, status: 'pendente' as const } } : x),
       notices: mine ? [{ id: uid(), kind: 'alerta' as const, title: 'Orçamento extra para aprovar', body: `${desc}: ${brl(value)} (antes da cobertura do plano)`, date: new Date().toISOString(), read: false, to: '/agendamentos/' + id }, ...s.notices] : s.notices,
@@ -193,6 +202,7 @@ export const useStore = create<State>()(persist((set, get) => ({
   saveReport: (id, r) => set(s => ({ bookings: s.bookings.map(x => x.id === id ? { ...x, report: r } : x) })),
   updateVehicle: (id, p) => set(s => ({ vehicles: s.vehicles.map(v => v.id === id ? { ...v, ...p } : v) })),
   reset: () => set(s => ({ ...initial(), signedIn: true, role: s.role, theme: s.theme })),
+  enterDemo: r => set(s => ({ ...initial(), signedIn: true, mode: 'demo', role: r, shopId: r === 'oficina' ? 'prospera' : undefined, theme: s.theme })),
 }), {
   name: 'carrook-v1',
   storage: createJSONStorage(() => safeStorage),

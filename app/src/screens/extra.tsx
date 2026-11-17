@@ -8,6 +8,7 @@ import { COVERAGE, PLANS, POSTS, POST_BODY, SERVICES, cut, img } from '../data'
 import { STATUS_FLOW, STATUS_LABEL, brl, useStore, type ReportMark, type Role } from '../store'
 import { BrandPattern, Btn, LogoMark, PageHead, Seal, Stars, ThemeSwitch, Wordmark, fmtDate } from '../ui'
 import { StatusChip } from './bookings'
+import { sb } from '../live'
 import { Bento, Bars, Field, Mini, Pill, PricingCards, Row } from '../bento'
 
 /* =================== Landing page de vendas =================== */
@@ -21,6 +22,8 @@ export function Landing() {
     ['Como o app sabe a quilometragem?', 'Você informa quando quiser, e o app estima pelo seu uso entre uma atualização e outra.'],
     ['Posso cancelar?', 'Pode, a qualquer momento, pelo próprio app.'],
   ]
+  // rola até a seção sem mexer no endereço (o app usa # para as telas)
+  const go = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   const avatar = (n: string) => <img src={cut(img(n))} alt="" className="h-8 w-10 object-contain" />
   const wrap = 'mx-auto max-w-6xl px-5'
   return (
@@ -29,9 +32,9 @@ export function Landing() {
         <div className={`${wrap} flex items-center justify-between py-3`}>
           <span className="flex items-center gap-2 text-royal"><LogoMark size={28} /><Wordmark className="text-lg text-fg" /></span>
           <nav className="flex items-center gap-1 text-sm font-semibold sm:gap-2">
-            <a href="#recursos" className="hidden px-3 py-2 md:block">Recursos</a>
-            <a href="#planos" className="hidden px-3 py-2 sm:block">Planos</a>
-            <a href="#duvidas" className="hidden px-3 py-2 md:block">Dúvidas</a>
+            <button onClick={() => go('recursos')} className="hidden px-3 py-2 md:block">Recursos</button>
+            <button onClick={() => go('planos')} className="hidden px-3 py-2 sm:block">Planos</button>
+            <button onClick={() => go('duvidas')} className="hidden px-3 py-2 md:block">Dúvidas</button>
             <ThemeSwitch tone="plain" className="mx-1" />
             <Link to="/entrar" className="px-3 py-2">Entrar</Link>
             <Link to="/cadastro" className="rounded-full bg-lime px-4 py-2 text-ink">Assinar</Link>
@@ -48,7 +51,7 @@ export function Landing() {
               <p className="flex items-center gap-1.5 text-[13px] font-semibold text-lime"><Sparkle size={15} weight="fill" />O plano de saúde do seu carro</p>
               <h1 className="mt-3 text-[40px] font-extrabold leading-[1.02] tracking-[-.01em] lg:text-[60px]"><i>Facilitar &amp; transformar</i> em rotina a manutenção do seu veículo.</h1>
               <p className="mt-4 max-w-lg text-[17px] leading-relaxed text-white/85">Alertas no app, oficinas certificadas com desconto e cobertura de até 80 itens.</p>
-              <div className="mt-7 flex flex-wrap gap-3"><Btn size="lg" onClick={() => nav('/cadastro')}>Assinar agora</Btn><a href="#recursos"><Btn size="lg" kind="outline">Ver recursos</Btn></a></div>
+              <div className="mt-7 flex flex-wrap gap-3"><Btn size="lg" onClick={() => nav('/cadastro')}>Assinar agora</Btn><Btn size="lg" kind="outline" onClick={() => go('recursos')}>Ver recursos</Btn></div>
             </div>
             <div className="relative">
               <span aria-hidden className="absolute left-1/2 top-[6%] aspect-square w-[76%] -translate-x-1/2 rounded-full bg-lime" />
@@ -207,6 +210,7 @@ export const Privacy = () => <LegalPage title="Política de privacidade" section
 export function ForgotPassword() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
+  const send = async () => { await sb.auth.resetPasswordForEmail(email.trim(), { redirectTo: location.origin + location.pathname }); setSent(true) }
   return (
     <div className="grid min-h-screen place-items-center bg-royal px-5 text-white">
       <div className="w-full max-w-sm">
@@ -220,7 +224,7 @@ export function ForgotPassword() {
           <Lock size={40} className="mt-8 text-lime" />
           <h1 className="mt-4 text-3xl font-extrabold">Esqueceu a senha?</h1>
           <p className="mt-2 text-white/80">Digite o e-mail da sua conta e enviamos um link para criar outra.</p>
-          <form className="mt-6 grid gap-3" onSubmit={e => { e.preventDefault(); if (email.includes('@')) setSent(true) }}>
+          <form className="mt-6 grid gap-3" onSubmit={e => { e.preventDefault(); if (email.includes('@')) send() }}>
             <input id="fp-email" className="field" type="email" required placeholder="voce@email.com" value={email} onChange={e => setEmail(e.target.value)} aria-label="E-mail" />
             <Btn kind="lime" size="lg" type="submit">Enviar link</Btn>
           </form>
@@ -279,16 +283,20 @@ export function BlogPost() {
 const ROLE_NAME: Record<Role, string> = { cliente: 'Assinante', oficina: 'Oficina parceira', admin: 'Equipe Carrook' }
 export function RoleGate({ need, children }: { need: Role; children: ReactNode }) {
   const role = useStore(s => s.role)
-  const set = useStore(s => s.set)
+  const signed = useStore(s => s.signedIn)
+  const mode = useStore(s => s.mode)
   const nav = useNavigate()
-  if (role === need) return <>{children}</>
+  if (signed && role === need) return <>{children}</>
   return (
     <div className="grid min-h-screen place-items-center bg-mist px-5">
       <div className="max-w-sm rounded-3xl bg-surface p-6 text-center">
         <Lock size={40} className="mx-auto text-royal" />
         <h1 className="mt-3 text-2xl font-extrabold">Acesso restrito</h1>
         <p className="mt-2 text-muted">Esta área é só para {ROLE_NAME[need].toLowerCase()}. Você está como {ROLE_NAME[role].toLowerCase()}.</p>
-        <Btn className="mt-5 w-full" onClick={() => set({ role: need, signedIn: true })}>Entrar como {ROLE_NAME[need].toLowerCase()} (demo)</Btn>
+        {mode === 'live' && signed
+          ? <p className="mt-4 rounded-2xl bg-mist p-3 text-sm">Para liberar, peça para a equipe Carrook mudar o seu perfil de acesso.</p>
+          : <><Btn className="mt-5 w-full" onClick={() => nav('/entrar')}>Entrar com minha conta</Btn>
+            <Btn kind="ghost" className="mt-2 w-full" onClick={() => useStore.getState().enterDemo(need)}>Ver demonstração como {ROLE_NAME[need].toLowerCase()}</Btn></>}
         <button className="mt-3 text-sm font-semibold text-royal" onClick={() => nav('/')}>Voltar ao app</button>
       </div>
     </div>
@@ -304,11 +312,12 @@ export const RolePicker = ({ onPick }: { onPick: (r: Role) => void }) => (
 )
 
 /* =================== Portal da oficina =================== */
-const SHOP_ID = 'prospera'
 const PNAV: [string, string, Icon][] = [['/oficina', 'Agenda', Kanban], ['/oficina/horarios', 'Horários', Clock], ['/oficina/repasses', 'Repasses', Money]]
 
 export function ShopShell() {
-  const shop = useStore(s => s.shops.find(x => x.id === SHOP_ID)!)
+  const SHOP_ID = useStore(s => s.shopId ?? 'prospera')
+  const shop = useStore(s => s.shops.find(x => x.id === SHOP_ID))
+  if (!shop) return <RoleGate need="oficina"><div className="grid min-h-screen place-items-center p-6 text-center text-muted">Sua conta ainda não está ligada a uma oficina. Peça à equipe Carrook.</div></RoleGate>
   return (
     <RoleGate need="oficina">
       <div className="min-h-screen bg-mist lg:flex">
@@ -330,6 +339,7 @@ export function ShopShell() {
 
 export function ShopAgenda() {
   const s = useStore()
+  const SHOP_ID = s.shopId ?? 'prospera'
   const list = s.bookings.filter(b => b.shopId === SHOP_ID && b.status !== 'cancelado').sort((a, b) => a.date.localeCompare(b.date))
   const open = list.filter(b => b.status !== 'concluido')
   return (
@@ -400,6 +410,7 @@ export function ShopService() {
 
 export function ShopHours() {
   const s = useStore()
+  const SHOP_ID = s.shopId ?? 'prospera'
   const shop = s.shops.find(x => x.id === SHOP_ID)!
   const hours = ['08:00', '09:30', '11:00', '13:30', '15:00', '16:30']
   const blocked = shop.blocked ?? []
@@ -419,6 +430,7 @@ export function ShopHours() {
 
 export function ShopPayouts() {
   const s = useStore()
+  const SHOP_ID = s.shopId ?? 'prospera'
   const shop = s.shops.find(x => x.id === SHOP_ID)!
   const done = s.bookings.filter(b => b.shopId === SHOP_ID && b.status === 'concluido')
   const rows = done.map(b => { const gross = Math.round(b.base * (1 - shop.discount / 100) * 100) / 100; return { b, gross, client: b.price, carrook: Math.max(0, gross - b.price) } })
@@ -474,3 +486,27 @@ export const Coverage = () => (
   </div>
 )
 
+
+/* =================== Nova senha (link do e-mail) =================== */
+export function NewPassword() {
+  const nav = useNavigate()
+  const [pass, setPass] = useState('')
+  const [err, setErr] = useState('')
+  return (
+    <div className="grid min-h-screen place-items-center bg-royal px-5 text-white">
+      <form className="w-full max-w-sm" onSubmit={async e => {
+        e.preventDefault()
+        if (pass.length < 6) { setErr('Use 6 ou mais caracteres.'); return }
+        const { error } = await sb.auth.updateUser({ password: pass })
+        if (error) { setErr('O link expirou. Peça um novo em "Esqueci minha senha".'); return }
+        useStore.getState().say('Senha alterada'); nav('/')
+      }}>
+        <Lock size={40} className="text-lime" />
+        <h1 className="mt-4 text-3xl font-extrabold">Crie uma nova senha</h1>
+        <input id="np-pass" className="field mt-6" type="password" autoComplete="new-password" placeholder="Nova senha" value={pass} onChange={e => setPass(e.target.value)} aria-label="Nova senha" />
+        {err && <p className="mt-2 text-sm text-lime">{err}</p>}
+        <Btn kind="lime" size="lg" type="submit" className="mt-4 w-full">Salvar senha</Btn>
+      </form>
+    </div>
+  )
+}

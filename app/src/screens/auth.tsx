@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { CaretLeft, Check, Eye, EyeSlash, QrCode, CreditCard } from '@phosphor-icons/react'
 import { CATALOG, COUPONS, PLANS, cut, img, lookupPlate, type PlanId } from '../data'
 import { RolePicker } from './extra'
+import { loadLive, savePendingVehicle, sb } from '../live'
 import type { Role } from '../store'
 import { brl, useStore } from '../store'
 import { BrandPattern, Btn, LogoMark, Plate, Wordmark } from '../ui'
@@ -48,7 +49,7 @@ export function Welcome() {
             <Btn size="lg" kind="outline" className="lg:!border-line lg:!text-fg" onClick={() => nav('/entrar')}>Entrar</Btn>
             <details className="group mt-1">
               <summary className="cursor-pointer list-none text-center text-sm font-medium text-white/80 underline-offset-4 hover:underline lg:text-muted">Ver demonstração com dados de exemplo</summary>
-              <div className="mt-3"><RolePicker onPick={(r: Role) => { set({ signedIn: true, role: r }); nav(r === 'admin' ? '/admin' : r === 'oficina' ? '/oficina' : '/') }} /></div>
+              <div className="mt-3"><RolePicker onPick={(r: Role) => { useStore.getState().enterDemo(r); nav(r === 'admin' ? '/admin' : r === 'oficina' ? '/oficina' : '/') }} /></div>
             </details>
             <Link to="/site" className="text-center text-sm font-semibold text-lime lg:text-royal">Conheça a Carrook</Link>
           </div>
@@ -66,11 +67,11 @@ const Back = ({ to }: { to?: string }) => {
 
 export function SignIn() {
   const nav = useNavigate()
-  const set = useStore(s => s.set)
   const [show, setShow] = useState(false)
-  const [email, setEmail] = useState('marina@exemplo.com')
-  const [pass, setPass] = useState('carrook123')
+  const [email, setEmail] = useState('')
+  const [pass, setPass] = useState('')
   const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
   return (
     <AuthFrame>
       <div className="flex min-h-screen flex-col px-6 pb-10 pt-[max(20px,env(safe-area-inset-top))] lg:justify-center lg:px-0">
@@ -78,17 +79,22 @@ export function SignIn() {
           <Back to="/bem-vindo" />
           <h1 className="mt-8 text-[32px] font-extrabold text-white lg:text-fg">Bem-vindo de volta</h1>
           <p className="mt-1 text-white/75 lg:text-muted">Entre para ver a saúde do seu carro.</p>
-          <form className="mt-8 grid gap-4 rounded-3xl bg-surface p-5 lg:p-0" onSubmit={e => {
+          <form className="mt-8 grid gap-4 rounded-3xl bg-surface p-5 lg:p-0" onSubmit={async e => {
             e.preventDefault()
             if (!email.includes('@') || pass.length < 6) { setErr('Confira o e-mail e a senha (mínimo 6 caracteres).'); return }
-            set({ signedIn: true, role: 'cliente' }); nav('/')
+            setBusy(true); setErr('')
+            const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password: pass })
+            if (error) { setBusy(false); setErr(error.message.includes('confirmed') ? 'Confirme seu e-mail pelo link que enviamos antes de entrar.' : 'E-mail ou senha incorretos.'); return }
+            const role = await loadLive()
+            setBusy(false)
+            nav(role === 'admin' ? '/admin' : role === 'oficina' ? '/oficina' : '/')
           }}>
             <label><span className="label">E-mail</span><input id="si-email" className="field" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" /></label>
             <label><span className="label">Senha</span>
               <span className="relative block"><input id="si-pass" className="field pr-12" type={show ? 'text' : 'password'} value={pass} onChange={e => setPass(e.target.value)} autoComplete="current-password" />
                 <button type="button" onClick={() => setShow(!show)} aria-label={show ? 'Esconder senha' : 'Mostrar senha'} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted">{show ? <EyeSlash size={20} /> : <Eye size={20} />}</button></span></label>
             {err && <p className="text-sm text-danger">{err}</p>}
-            <Btn size="lg" type="submit" kind="royal" className="mt-1">Entrar</Btn>
+            <Btn size="lg" type="submit" kind="royal" className="mt-1" disabled={busy}>{busy ? 'Entrando…' : 'Entrar'}</Btn>
             <Link to="/recuperar-senha" className="text-center text-sm font-semibold text-royal">Esqueci minha senha</Link>
           </form>
           <p className="mt-6 text-center text-sm text-white/80 lg:text-muted">Ainda não tem conta? <Link to="/cadastro" className="font-bold text-lime lg:text-royal">Crie agora</Link></p>
@@ -109,20 +115,43 @@ export function SignUp() {
   const coupon = COUPONS[d.coupon.trim().toUpperCase()]
   const firstOff = coupon ? coupon.off : 0.1
   const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [sent, setSent] = useState(false)
   const up = (k: keyof typeof d) => (e: { target: { value: string } }) => setD({ ...d, [k]: e.target.value })
   const plan = PLANS.find(p => p.id === d.plan)!
 
-  const next = () => {
+  const next = async () => {
     setErr('')
     if (step === 0 && (!d.name.trim() || !d.email.includes('@') || d.pass.length < 6)) return setErr('Preencha nome, e-mail válido e uma senha com 6 ou mais caracteres.')
     if (step === 1 && (d.plate.replace(/\W/g, '').length !== 7 || !d.km)) return setErr('Digite a placa (7 caracteres) e a quilometragem do painel.')
     if (step < 3) return setStep(step + 1)
     const c = CATALOG[d.car]
-    st.set({ signedIn: true, role: 'cliente', planSince: new Date().toISOString(), user: { name: d.name, email: d.email, phone: d.phone }, plan: d.plan, vehicles: [], bookings: st.bookings.filter(b => b.vehicleId === '-'), notices: [], yearlyUsed: {} })
-    st.addVehicle({ brand: c.brand, model: c.model, year: +d.year, plate: d.plate.replace(/\W/g, '').toUpperCase(), photo: c.photo, km: +d.km.replace(/\D/g, '') })
+    const vehicle = { brand: c.brand, model: c.model, year: +d.year, plate: d.plate.replace(/\W/g, '').toUpperCase(), photo: c.photo, km: +d.km.replace(/\D/g, '') }
+    setBusy(true)
+    savePendingVehicle(vehicle) // entra no banco no primeiro login
+    const { data, error } = await sb.auth.signUp({
+      email: d.email.trim(), password: d.pass,
+      options: { data: { name: d.name.trim(), phone: d.phone, plan: d.plan }, emailRedirectTo: location.origin + location.pathname },
+    })
+    if (error) { setBusy(false); setErr(error.message.includes('registered') ? 'Esse e-mail já tem conta. Entre ou recupere a senha.' : 'Não foi possível criar a conta agora. Tente de novo em instantes.'); return }
+    if (!data.session) { setBusy(false); setSent(true); return } // precisa confirmar o e-mail
+    await loadLive()
+    setBusy(false)
     st.say(`Bem-vindo à Carrook, ${d.name.split(' ')[0]}!`)
     nav('/')
   }
+  if (sent) return (
+    <AuthFrame photo={img('car-crv')}>
+      <div className="grid min-h-screen place-items-center bg-ice px-6">
+        <div className="max-w-sm text-center">
+          <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-lime text-ink"><Check size={32} weight="bold" /></span>
+          <h1 className="mt-5 text-[28px] font-extrabold">Confirme seu e-mail</h1>
+          <p className="mt-2 text-muted">Enviamos um link para <b>{d.email}</b>. Abra o e-mail, toque no link e depois entre com sua senha. Seu carro já fica salvo.</p>
+          <Btn size="lg" className="mt-6 w-full" onClick={() => nav('/entrar')}>Ir para o login</Btn>
+        </div>
+      </div>
+    </AuthFrame>
+  )
 
   return (
     <AuthFrame photo={img('car-crv')} quote={<>Um plano de saúde, <i>só que para o seu carro.</i></>}>
@@ -203,7 +232,7 @@ export function SignUp() {
           </>}
 
           {err && <p className="mt-4 rounded-2xl bg-danger/10 px-4 py-3 text-sm text-danger">{err}</p>}
-          <div className="mt-auto pt-8 lg:mt-8"><Btn size="lg" className="w-full" onClick={next}>{step === 3 ? 'Assinar e começar' : 'Continuar'}</Btn></div>
+          <div className="mt-auto pt-8 lg:mt-8"><Btn size="lg" className="w-full" disabled={busy} onClick={next}>{busy ? 'Criando conta…' : step === 3 ? 'Assinar e começar' : 'Continuar'}</Btn></div>
         </div>
       </div>
     </AuthFrame>

@@ -4,6 +4,7 @@ import { Bell, CalendarCheck, Tag, Gauge as GaugeIcon, GasPump, Check, Car, Crow
 import { CARENCIA_DIAS, FUEL, NOT_COVERED, PLANS, type PlanId } from '../data'
 import { Coverage, RolePicker } from './extra'
 import { PricingCards } from '../bento'
+import { signOut } from '../live'
 import { brl, carenciaLeft, uid, useStore, type Notice, type Prefs, type Theme } from '../store'
 import { BrandPattern, Btn, LogoMark, PageHead, ThemeSwitch, fmtDate } from '../ui'
 
@@ -122,7 +123,7 @@ export function Menu() {
       <div className="mx-5 -mt-0 mt-4 overflow-hidden rounded-3xl bg-surface">
         {ITEMS.map(([to, t, Ic]) => <Link key={to} to={to} className="flex items-center gap-4 border-b border-line px-4 py-4 last:border-0"><Ic size={22} className="text-royal" /><span className="flex-1 font-medium">{t}</span><CaretRight size={18} className="text-muted" /></Link>)}
       </div>
-      <button onClick={() => { s.set({ signedIn: false }); nav('/bem-vindo') }} className="mx-5 mt-4 flex items-center gap-2 font-semibold text-danger"><SignOut size={20} />Sair</button>
+      <button onClick={async () => { if (s.mode === 'live') await signOut(); else s.set({ signedIn: false }); nav('/bem-vindo') }} className="mx-5 mt-4 flex items-center gap-2 font-semibold text-danger"><SignOut size={20} />Sair</button>
     </div>
   )
 }
@@ -159,15 +160,16 @@ export function Profile() {
         <div className="flex items-center gap-3 rounded-2xl bg-surface p-4"><QrCode size={24} className="text-[#32BCAD]" weight="fill" /><span className="flex-1"><b className="block">Pix recorrente</b><span className="text-sm text-muted">Assinatura mensal</span></span><span className="rounded-full bg-lime/20 px-2.5 py-1 text-xs font-bold text-ok">Principal</span></div>
         <div className="flex items-center gap-3 rounded-2xl bg-surface p-4"><span className="rounded-md bg-slate px-2 py-1 text-[10px] font-bold text-white">VISA</span><span className="flex-1"><b className="block">Crédito •••• 4821</b><span className="text-sm text-muted">Vence 08/29</span></span></div>
       </div>
-      <div className="mx-5 mt-8 rounded-3xl bg-royal p-4 text-sm text-white lg:mx-0">
+      {s.mode === 'demo' && <><div className="mx-5 mt-8 rounded-3xl bg-royal p-4 text-sm text-white lg:mx-0">
         <b>Perfil de demonstração</b><p className="mb-3 mt-1 text-white/75">Veja a plataforma como assinante, oficina parceira ou equipe Carrook.</p>
-        <RolePicker onPick={r => { s.set({ role: r }); nav(r === 'admin' ? '/admin' : r === 'oficina' ? '/oficina' : '/') }} />
+        <RolePicker onPick={r => { s.enterDemo(r); nav(r === 'admin' ? '/admin' : r === 'oficina' ? '/oficina' : '/') }} />
       </div>
       <div className="mx-5 mt-4 rounded-3xl border-2 border-dashed border-line p-4 text-sm lg:mx-0">
         <b>Dados de demonstração</b><p className="mt-1 text-muted">Volta o app para o estado inicial, com os veículos e agendamentos de exemplo.</p>
         {resetAsk ? <div className="mt-3 flex gap-2"><Btn size="sm" kind="dark" onClick={() => { s.reset(); setResetAsk(false); s.say('Demonstração reiniciada'); nav('/') }}>Reiniciar</Btn><Btn size="sm" kind="ghost" onClick={() => setResetAsk(false)}>Cancelar</Btn></div>
           : <Btn size="sm" kind="ghost" className="mt-3" onClick={() => setResetAsk(true)}>Reiniciar demonstração</Btn>}
-      </div>
+      </div></>}
+      {s.mode === 'live' && <Btn kind="line" className="mx-5 mt-8 lg:mx-0" onClick={async () => { await signOut(); nav('/bem-vindo') }}>Sair da conta</Btn>}
     </div>
   )
 }
