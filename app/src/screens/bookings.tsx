@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CheckCircle, MapPin, CalendarBlank, X, Star, Car, Wrench, MagnifyingGlass, Flag, ClipboardText, Check } from '@phosphor-icons/react'
-import { SERVICES } from '../data'
+import { SERVICES, cut } from '../data'
 import { ExtraApproval } from './extra'
 import { STATUS_FLOW, STATUS_LABEL, brl, useStore, type BookingStatus } from '../store'
 import { Btn, PageHead, SERVICE_ICON, fmtDate } from '../ui'
@@ -108,7 +108,7 @@ export function BookingDetail() {
             <div className="p-4">
               <b className="block">{shop.name}</b>
               <span className="flex items-center gap-1 text-sm text-muted"><MapPin size={14} />{shop.address}</span>
-              {v && <span className="mt-3 flex items-center gap-3 rounded-2xl bg-mist p-2 pr-3"><img src={v.photo} alt="" className="h-10 w-14 rounded-xl object-cover" /><span className="text-sm"><b className="block">{v.brand} {v.model}</b><span className="text-muted">{v.plate}</span></span></span>}
+              {v && <span className="mt-3 flex items-center gap-3 rounded-2xl bg-mist p-2 pr-3"><span className="h-10 w-14 shrink-0 rounded-xl bg-surface p-1"><img src={cut(v.photo)} alt="" className="h-full w-full object-contain" /></span><span className="text-sm"><b className="block">{v.brand} {v.model}</b><span className="text-muted">{v.plate}</span></span></span>}
             </div>
           </div>
           <div className="rounded-3xl bg-surface p-4 text-sm">

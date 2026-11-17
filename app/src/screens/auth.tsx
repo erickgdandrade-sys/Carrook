@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CaretLeft, Check, Eye, EyeSlash, QrCode, CreditCard } from '@phosphor-icons/react'
-import { CATALOG, COUPONS, PLANS, img, lookupPlate, type PlanId } from '../data'
+import { CATALOG, COUPONS, PLANS, cut, img, lookupPlate, type PlanId } from '../data'
 import { RolePicker } from './extra'
 import type { Role } from '../store'
 import { brl, useStore } from '../store'
@@ -159,7 +159,7 @@ export function SignUp() {
                 <div className="no-scrollbar -mx-6 flex gap-3 overflow-x-auto px-6 pb-1">
                   {CATALOG.map((c, i) => (
                     <button key={i} onClick={() => setD({ ...d, car: i })} aria-pressed={d.car === i} className={`w-[132px] shrink-0 overflow-hidden rounded-2xl border-2 bg-surface text-left transition ${d.car === i ? 'border-royal' : 'border-transparent'}`}>
-                      <img src={c.photo} alt="" className="h-20 w-full object-cover" /><span className="block px-3 py-2 text-[13px] leading-tight"><b className="block">{c.model}</b><span className="text-muted">{c.brand}</span></span>
+                      <span className="block h-20 bg-mist p-2"><img src={cut(c.photo)} alt="" className="h-full w-full object-contain" /></span><span className="block px-3 py-2 text-[13px] leading-tight"><b className="block">{c.model}</b><span className="text-muted">{c.brand}</span></span>
                     </button>))}
                 </div></div>
               <div className="grid grid-cols-2 gap-3">

@@ -1,9 +1,9 @@
 import { Fragment, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Car, Lightning, Plus, Trash, CaretRight, CaretLeft, CheckCircle, Path } from '@phosphor-icons/react'
-import { CATALOG, MODEL_PLANS, PLANS, SERVICES, lookupPlate } from '../data'
+import { CATALOG, MODEL_PLANS, PLANS, SERVICES, cut, lookupPlate } from '../data'
 import { currentKm, daysSince, fmtKm, healthScore, itemStates, useStore } from '../store'
-import { Btn, Gauge, ITEM_ICON, LEVEL, Odometer, PageHead, Plate, Section, fmtDate } from '../ui'
+import { BrandPattern, Btn, Gauge, ITEM_ICON, LEVEL, Odometer, PageHead, Plate, Section, fmtDate } from '../ui'
 
 export function Garage() {
   const s = useStore()
@@ -19,7 +19,7 @@ export function Garage() {
           return (
             <Link key={v.id} to={`/veiculos/${v.id}`} className="group overflow-hidden rounded-3xl bg-surface">
               <div className="relative">
-                <img src={v.photo} alt="" className="aspect-[2/1] w-full object-cover transition group-hover:scale-[1.02]" />
+                <div className="relative aspect-[2/1] bg-gradient-to-b from-mist to-surface"><img src={cut(v.photo)} alt="" className="absolute bottom-[8%] left-1/2 h-[78%] w-[86%] -translate-x-1/2 object-contain object-bottom transition group-hover:scale-[1.03]" /></div>
                 <span className="absolute left-3 top-3"><Plate plate={v.plate} size="sm" /></span>
                 {v.id === s.activeVehicle && <span className="absolute right-3 top-3 rounded-full bg-lime px-2.5 py-1 text-[11px] font-bold">No início</span>}
               </div>
@@ -68,13 +68,14 @@ export function VehicleDetail() {
   return (
     <div>
       {/* Foto em destaque */}
-      <div className="relative h-[300px] overflow-hidden lg:h-[340px] lg:rounded-4xl">
-        <img src={v.photo} alt={`${v.brand} ${v.model}`} className="h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate via-slate/20 to-slate/30" />
+      <div className="relative h-[360px] overflow-hidden bg-navy lg:h-[360px] lg:rounded-4xl">
+        <BrandPattern opacity={0.06} />
+        <div aria-hidden className="absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-black/30 to-transparent" />
+        <img src={cut(v.photo)} alt={`${v.brand} ${v.model}`} className="absolute bottom-4 left-1/2 h-[54%] max-w-[90%] -translate-x-1/2 object-contain object-bottom lg:bottom-6 lg:left-auto lg:right-10 lg:h-[76%] lg:max-w-[58%] lg:translate-x-0" />
         <button onClick={() => nav(-1)} aria-label="Voltar" className="absolute left-5 top-[max(16px,env(safe-area-inset-top))] grid h-10 w-10 place-items-center rounded-full bg-white/90 text-[#151A3B] lg:hidden"><CaretLeft size={20} weight="bold" /></button>
-        <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-4 text-white lg:inset-x-8 lg:bottom-7">
-          <div className="min-w-0"><p className="text-sm text-white/75">{v.nickname ?? v.brand} · {v.year}</p><h1 className="text-[32px] font-extrabold leading-none lg:text-[44px]">{v.brand} {v.model}</h1><div className="mt-3"><Plate plate={v.plate} /></div></div>
-          <div className="hidden shrink-0 sm:block"><Gauge score={healthScore(v, s.autoKm)} size={130} /></div>
+        <div className="absolute left-[72px] right-5 top-[max(16px,env(safe-area-inset-top))] flex items-start justify-between gap-4 text-white lg:left-8 lg:top-8">
+          <div className="min-w-0"><p className="text-sm text-white/75">{v.nickname ?? v.brand} · {v.year}</p><h1 className="text-[28px] font-extrabold leading-none lg:text-[44px]">{v.brand} {v.model}</h1><div className="mt-3"><Plate plate={v.plate} /></div></div>
+          <div className="hidden shrink-0 sm:block lg:absolute lg:left-0 lg:top-[170px]"><Gauge score={healthScore(v, s.autoKm)} size={130} /></div>
         </div>
       </div>
 
@@ -182,7 +183,7 @@ export function AddVehicle() {
         <div><span className="label">Modelo</span>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{CATALOG.map((c, i) => (
             <button key={i} onClick={() => setD({ ...d, car: i })} aria-pressed={d.car === i} className={`overflow-hidden rounded-2xl border-2 bg-surface text-left ${d.car === i ? 'border-royal' : 'border-transparent'}`}>
-              <img src={c.photo} alt="" className="h-20 w-full object-cover" /><span className="block px-3 py-2 text-[13px]"><b>{c.model}</b> <span className="text-muted">{c.brand}</span></span></button>))}</div></div>
+              <span className="block h-20 bg-mist p-2"><img src={cut(c.photo)} alt="" className="h-full w-full object-contain" /></span><span className="block px-3 py-2 text-[13px]"><b>{c.model}</b> <span className="text-muted">{c.brand}</span></span></button>))}</div></div>
         <div className="grid grid-cols-2 gap-3">
           <label><span className="label">Ano</span><select id="av-year" className="field" value={d.year} onChange={e => setD({ ...d, year: e.target.value })}>{Array.from({ length: 16 }, (_, i) => 2026 - i).map(y => <option key={y}>{y}</option>)}</select></label>
           <label><span className="label">Km no painel</span><input id="av-km" className="field" inputMode="numeric" value={d.km} onChange={e => setD({ ...d, km: e.target.value })} placeholder="32000" /></label>
@@ -211,7 +212,7 @@ function EditVehicle({ id, onDone }: { id: string; onDone: () => void }) {
         <label><span className="label">Placa</span><input id="ev-plate" className="field uppercase" maxLength={8} value={d.plate} onChange={e => setD({ ...d, plate: e.target.value })} /></label>
         <label><span className="label">Ano</span><select id="ev-year" className="field" value={d.year} onChange={e => setD({ ...d, year: e.target.value })}>{Array.from({ length: 16 }, (_, i) => 2026 - i).map(y => <option key={y}>{y}</option>)}</select></label>
       </div>
-      <div><span className="label">Foto</span><div className="grid grid-cols-3 gap-2">{CATALOG.map(c => <button key={c.photo} onClick={() => setD({ ...d, photo: c.photo })} aria-pressed={d.photo === c.photo} aria-label={`Foto ${c.model}`} className={`overflow-hidden rounded-xl border-2 ${d.photo === c.photo ? 'border-royal' : 'border-transparent'}`}><img src={c.photo} alt="" className="h-14 w-full object-cover" /></button>)}</div></div>
+      <div><span className="label">Foto</span><div className="grid grid-cols-3 gap-2">{CATALOG.map(c => <button key={c.photo} onClick={() => setD({ ...d, photo: c.photo })} aria-pressed={d.photo === c.photo} aria-label={`Foto ${c.model}`} className={`overflow-hidden rounded-xl border-2 ${d.photo === c.photo ? 'border-royal' : 'border-transparent'}`}><span className="block h-14 bg-mist p-1.5"><img src={cut(c.photo)} alt="" className="h-full w-full object-contain" /></span></button>)}</div></div>
       <div className="flex gap-2"><Btn kind="royal" onClick={save}>Salvar</Btn><Btn kind="ghost" onClick={onDone}>Cancelar</Btn></div>
     </section>
   )

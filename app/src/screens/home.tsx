@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Bell, DotsThreeVertical, GasPump, ArrowRight, CalendarBlank, MapPin, Plus, Lightning } from '@phosphor-icons/react'
-import { POSTS, PLANS, SERVICES, type ServiceKey } from '../data'
+import { POSTS, PLANS, SERVICES, cut, type ServiceKey } from '../data'
 import { brl, currentKm, daysSince, fmtKm, healthScore, itemStates, quote, useStore, type Vehicle } from '../store'
 import { Btn, Gauge, ITEM_ICON, LEVEL, LogoMark, Plate, SERVICE_ICON, Section, fmtDate } from '../ui'
 
@@ -149,7 +149,10 @@ function VehicleCarousel({ vehicles, index, onIndex, autoKm }: { vehicles: Vehic
                     <button className="block w-full px-4 py-3 text-left hover:bg-mist" onClick={() => nav('/veiculos')}>Gerenciar veículos</button>
                   </div>)}
                 <Link to={`/veiculos/${v.id}`} className="block">
-                  <img src={v.photo} alt={`${v.brand} ${v.model}`} className="aspect-[16/9] w-full rounded-[20px] object-cover lg:aspect-[16/8]" />
+                  <div className="relative aspect-[16/9] overflow-hidden rounded-[20px] bg-gradient-to-b from-mist via-mist to-surface lg:aspect-[16/8]">
+                    <span aria-hidden className="absolute inset-x-0 bottom-[14%] h-px bg-line" />
+                    <img src={cut(v.photo)} alt={`${v.brand} ${v.model}`} className="absolute bottom-[6%] left-1/2 h-[84%] w-[90%] -translate-x-1/2 object-contain object-bottom" />
+                  </div>
                   <div className="px-2 pb-1 pt-4">
                     <div className="flex items-end justify-between gap-3">
                       <div className="min-w-0"><p className="text-[13px] font-medium text-muted">{v.brand} · {v.year}</p><h2 className="truncate text-[24px] font-bold leading-tight">{v.model}</h2></div>

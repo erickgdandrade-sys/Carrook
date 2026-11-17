@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { MapPin, Clock, Phone, CaretLeft, QrCode, CreditCard, Barcode, DeviceMobile, Copy, Check, Info, ListBullets, MapTrifold } from '@phosphor-icons/react'
-import { SERVICES, type ServiceKey } from '../data'
+import { SERVICES, cut, type ServiceKey } from '../data'
 import { brl, quote, recommendScore, useStore } from '../store'
 import { Btn, LogoMark, PageHead, SERVICE_ICON, Seal, Stars, fmtDate } from '../ui'
 
@@ -194,7 +194,7 @@ export function Schedule() {
           <div><span className="label">Veículo</span>
             <div className="grid grid-cols-2 gap-2">{s.vehicles.map(v => (
               <button key={v.id} onClick={() => setVehicle(v.id)} aria-pressed={vehicle === v.id} className={`flex items-center gap-2 overflow-hidden rounded-2xl border-2 bg-surface pr-3 text-left ${vehicle === v.id ? 'border-royal' : 'border-transparent'}`}>
-                <img src={v.photo} alt="" className="h-14 w-16 object-cover" /><b className="truncate text-sm">{v.model}</b></button>))}</div></div>)}
+                <span className="h-14 w-16 shrink-0 bg-mist p-1"><img src={cut(v.photo)} alt="" className="h-full w-full object-contain" /></span><b className="truncate text-sm">{v.model}</b></button>))}</div></div>)}
         <label><span className="label">Serviço</span>
           <select id="sc-svc" className="field" value={svc} onChange={e => setSvc(e.target.value as ServiceKey)}>{shop.services.map(k => <option key={k} value={k}>{SERVICES[k].name}</option>)}</select></label>
         <div><span className="label">Dia</span>

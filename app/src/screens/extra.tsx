@@ -4,7 +4,7 @@ import {
   ArrowLeft, ArrowRight, Bell, Check, CheckCircle, Copy, Gift, Kanban, Money, ShieldCheck, Storefront, Warning,
   WhatsappLogo, EnvelopeSimple, InstagramLogo, Clock, X, Lock, Car, Wrench, type Icon,
 } from '@phosphor-icons/react'
-import { COVERAGE, PLANS, POSTS, POST_BODY, SERVICES, img } from '../data'
+import { COVERAGE, PLANS, POSTS, POST_BODY, SERVICES, cut, img } from '../data'
 import { STATUS_FLOW, STATUS_LABEL, brl, useStore, type ReportMark, type Role } from '../store'
 import { BrandPattern, Btn, LogoMark, PageHead, Seal, Stars, Wordmark, fmtDate } from '../ui'
 import { StatusChip } from './bookings'
@@ -45,7 +45,10 @@ export function Landing() {
             <div className="mt-8 flex flex-wrap gap-3"><Link to="/cadastro"><Btn size="lg">Assinar agora</Btn></Link><a href="#como"><Btn size="lg" kind="outline">Como funciona</Btn></a></div>
           </div>
           <div className="relative">
-            <img src={img('car-rav4')} alt="Toyota RAV4 prata" className="aspect-[4/3] w-full rounded-[32px] object-cover" />
+            <div className="relative aspect-[4/3]">
+              <span aria-hidden className="absolute left-1/2 top-[8%] aspect-square w-[78%] -translate-x-1/2 rounded-full bg-lime" />
+              <img src={cut(img('car-rav4'))} alt="Toyota RAV4 prata" className="absolute bottom-[8%] left-1/2 w-[96%] -translate-x-1/2 drop-shadow-2xl" />
+            </div>
             <div className="absolute -bottom-5 left-5 flex items-center gap-3 rounded-3xl bg-surface p-4 text-fg shadow-float">
               <span className="grid h-11 w-11 place-items-center rounded-2xl bg-lime text-ink"><Bell size={22} weight="fill" /></span>
               <span><b className="block">Troca de óleo em 500 km</b><span className="text-sm text-muted">Agende com 22% de desconto</span></span>

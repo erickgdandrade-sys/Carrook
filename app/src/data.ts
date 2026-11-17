@@ -2,6 +2,8 @@
 // Tudo aqui é fictício e serve para o protótipo; depois vem do backend.
 
 export const img = (name: string) => `./img/${name}.jpg`
+/** Versão recortada (sem fundo) da foto de um carro */
+export const cut = (photo: string) => photo.replace('./img/', './img/cut/').replace('.jpg', '.webp')
 
 export type PlanId = 'clube' | 'start' | 'premium'
 export interface Plan {
