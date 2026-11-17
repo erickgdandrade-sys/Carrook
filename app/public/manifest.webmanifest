@@ -1,0 +1,3 @@
+{ "name": "Carrook", "short_name": "Carrook", "start_url": "./", "display": "standalone",
+  "background_color": "#1F55E1", "theme_color": "#5A66F6",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }] }

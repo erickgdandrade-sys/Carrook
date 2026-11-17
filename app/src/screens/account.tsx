@@ -1,0 +1,156 @@
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Bell, CalendarCheck, Tag, Gauge as GaugeIcon, GasPump, Check, Car, Crown, Gift, User, SignOut, ChartLineUp, CaretRight, Wrench, ShieldCheck, Percent, QrCode, ArrowCounterClockwise, type Icon } from '@phosphor-icons/react'
+import { FUEL, PLANS, type PlanId } from '../data'
+import { brl, useStore, type Notice } from '../store'
+import { BrandPattern, Btn, LogoMark, PageHead, fmtDate } from '../ui'
+
+const N_ICON: Record<Notice['kind'], Icon> = { alerta: Wrench, agenda: CalendarCheck, promo: Tag, km: GaugeIcon }
+
+export function Notices() {
+  const s = useStore()
+  const nav = useNavigate()
+  return (
+    <div className="lg:max-w-3xl">
+      <PageHead title="Notificações" back={false} right={s.notices.some(n => !n.read) && <button onClick={s.readAll} className="text-sm font-semibold text-royal">Marcar como lidas</button>} />
+      <div className="grid gap-2 px-5 lg:px-0">
+        {s.notices.map(n => {
+          const Ic = N_ICON[n.kind]
+          return (
+            <button key={n.id} onClick={() => { s.set({ notices: s.notices.map(x => x.id === n.id ? { ...x, read: true } : x) }); if (n.to) nav(n.to) }} className={`flex gap-3 rounded-3xl p-4 text-left transition ${n.read ? 'bg-white/60' : 'bg-white shadow-soft'}`}>
+              <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${n.kind === 'promo' ? 'bg-lime text-ink' : n.kind === 'agenda' ? 'bg-royal text-white' : 'bg-mist text-royal'}`}><Ic size={22} weight="fill" /></span>
+              <span className="min-w-0 flex-1"><span className="flex items-start justify-between gap-2"><b className="text-[15px]">{n.title}</b><span className="shrink-0 text-xs text-muted">{fmtDate(n.date)}</span></span><span className="text-sm text-muted">{n.body}</span></span>
+              {!n.read && <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-lime" />}
+            </button>)
+        })}
+        {!s.notices.length && <div className="rounded-3xl bg-white p-8 text-center text-muted"><Bell size={32} className="mx-auto mb-2" />Sem notificações por enquanto.</div>}
+      </div>
+    </div>
+  )
+}
+
+export function Benefits() {
+  const [coupon, setCoupon] = useState<string>()
+  const plan = useStore(s => PLANS.find(p => p.id === s.plan)!)
+  const yearly = useStore(s => s.yearlyUsed)
+  return (
+    <div>
+      <PageHead title="Benefícios" sub={`Inclusos no ${plan.name}`} />
+      <div className="grid gap-4 px-5 lg:grid-cols-2 lg:px-0">
+        <section className="relative overflow-hidden rounded-3xl bg-lime p-5 text-ink lg:row-span-2">
+          <GasPump size={40} weight="fill" />
+          <h2 className="mt-3 text-[26px] font-extrabold leading-tight">Desconto em combustível</h2>
+          <p className="text-ink/70">Mostre o cupom no caixa dos postos parceiros.</p>
+          <div className="mt-4 grid gap-2">
+            {FUEL.map(f => (
+              <div key={f.id} className="rounded-2xl bg-white/70 p-4">
+                <div className="flex items-center justify-between gap-3"><span><b className="block">{f.name}</b><span className="text-sm text-ink/60">{f.address} · {f.distanceKm.toFixed(1).replace('.', ',')} km</span></span><span className="text-right text-xl font-extrabold">-{brl(f.perLiter)}<small className="block text-xs font-semibold">por litro</small></span></div>
+                {coupon === f.id ? (
+                  <div className="mt-3 flex items-center gap-3 rounded-xl bg-ink p-3 text-white"><QrCode size={56} className="text-lime" /><span><span className="text-xs text-white/60">Cupom válido por 15 min</span><b className="block text-2xl tracking-[.2em]">CK-{f.id.slice(0, 3).toUpperCase()}{Math.floor(1000 + Math.random() * 8999)}</b></span></div>
+                ) : <Btn size="sm" kind="dark" className="mt-3" onClick={() => setCoupon(f.id)}>Gerar cupom</Btn>}
+              </div>))}
+          </div>
+        </section>
+        {([
+          [ShieldCheck, 'Revisão anual de 80 itens', yearly.revisao ? 'Já usada este ano. Renova na data da assinatura.' : 'Disponível. Agende quando quiser.', yearly.revisao ? undefined : '/oficinas?servico=revisao'],
+          [ArrowCounterClockwise, 'Troca de óleo e filtro', yearly.oleo ? 'Já usada este ano.' : 'Uma troca gratuita por ano.', yearly.oleo ? undefined : '/oficinas?servico=oleo'],
+          [Percent, 'Até 20% em peças', 'Desconto aplicado direto na oficina parceira.', '/oficinas'],
+          [Gift, '+15 vantagens de parceiros', 'Lavagem, estacionamento, seguros e mais. Em breve no app.', undefined],
+        ] as [Icon, string, string, string | undefined][]).map(([Ic, t, d, to]) => (
+          <div key={t} className="flex gap-4 rounded-3xl bg-white p-5">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-mist text-royal"><Ic size={24} weight="duotone" /></span>
+            <div className="flex-1"><b className="block text-[17px]">{t}</b><p className="text-sm text-muted">{d}</p>{to && <Link to={to} className="mt-2 inline-block text-sm font-semibold text-royal">Usar agora</Link>}</div>
+          </div>))}
+      </div>
+    </div>
+  )
+}
+
+export function PlanPage() {
+  const s = useStore()
+  const [pick, setPick] = useState<PlanId>()
+  const cur = PLANS.find(p => p.id === s.plan)!
+  const change = (id: PlanId) => {
+    if (s.vehicles.length > s.planLimits[id]) { s.say(`Esse plano cobre ${s.planLimits[id]} veículo(s). Remova um antes.`); return }
+    s.set({ plan: id }); setPick(undefined); s.say(`Plano alterado para ${PLANS.find(p => p.id === id)!.name}`)
+  }
+  return (
+    <div>
+      <PageHead title="Meu plano" sub="O plano de saúde do seu carro" />
+      <div className="relative mx-5 overflow-hidden rounded-3xl bg-royal p-6 text-white lg:mx-0 lg:p-8">
+        <BrandPattern opacity={0.08} />
+        <div className="relative flex flex-wrap items-end justify-between gap-4">
+          <div><p className="text-sm text-white/70">Plano atual</p><h2 className="text-[34px] font-extrabold leading-none">{cur.name}</h2><p className="mt-2 text-white/80">{brl(s.planPrices[cur.id])}/mês · renova dia 5 · {s.vehicles.length} de {s.planLimits[cur.id]} veículos</p></div>
+          <LogoMark size={64} color="#41D92A" />
+        </div>
+      </div>
+      <h2 className="mt-8 px-5 text-lg font-semibold lg:px-0">Compare os planos</h2>
+      <div className="no-scrollbar mt-3 flex snap-x gap-4 overflow-x-auto px-5 pb-3 pt-3 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0">
+        {PLANS.map(p => {
+          const mine = p.id === s.plan, dark = p.popular
+          return (
+            <article key={p.id} className={`relative flex w-[280px] shrink-0 snap-center flex-col rounded-3xl p-6 lg:w-auto ${dark ? 'bg-navy text-white' : 'bg-white'} ${mine ? 'ring-[3px] ring-lime' : ''}`}>
+              {p.popular && <span className="absolute -top-3 left-6 rounded-full bg-lime px-3 py-1 text-xs font-bold text-ink">⚡ Popular</span>}
+              <h3 className="text-xl font-bold">{p.name}</h3>
+              <p className={`mt-1 text-sm ${dark ? 'text-white/70' : 'text-muted'}`}>{p.tagline}</p>
+              <p className="mt-4"><span className={`text-sm ${dark ? 'text-white/70' : 'text-muted'}`}>a partir de</span><span className="block text-[38px] font-extrabold leading-none tabular-nums">{brl(s.planPrices[p.id]).replace(',00', '')}<small className={`text-base font-medium ${dark ? 'text-white/60' : 'text-muted'}`}>/mês</small></span></p>
+              <ul className="mt-5 grid flex-1 content-start gap-2.5 text-[15px]">
+                {[...p.perks, `Até ${s.planLimits[p.id]} ${s.planLimits[p.id] > 1 ? 'veículos' : 'veículo'}`].map(x => <li key={x} className="flex gap-2.5"><span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-lime text-ink"><Check size={12} weight="bold" /></span>{x}</li>)}
+              </ul>
+              {mine ? <Btn kind={dark ? 'white' : 'ghost'} className="mt-6" disabled>Seu plano</Btn>
+                : pick === p.id ? <div className="mt-6 grid gap-2"><Btn onClick={() => change(p.id)}>Confirmar troca</Btn><Btn kind={dark ? 'outline' : 'ghost'} onClick={() => setPick(undefined)}>Cancelar</Btn></div>
+                  : <Btn kind={dark ? 'lime' : 'royal'} className="mt-6" onClick={() => setPick(p.id)}>Mudar para {p.short}</Btn>}
+            </article>)
+        })}
+      </div>
+      <p className="mx-5 mt-4 text-sm leading-relaxed text-muted lg:mx-0">Coparticipação é a parte do custo que você paga nos serviços cobertos: no Start, metade; no Premium, 20%. Revisão anual e troca de óleo estão incluídas em todos os planos.</p>
+    </div>
+  )
+}
+
+export function Menu() {
+  const s = useStore()
+  const nav = useNavigate()
+  const plan = PLANS.find(p => p.id === s.plan)!
+  const ITEMS: [string, string, Icon][] = [['/veiculos', 'Meus veículos', Car], ['/agendamentos', 'Agendamentos', CalendarCheck], ['/beneficios', 'Benefícios', Gift], ['/plano', 'Meu plano', Crown], ['/perfil', 'Perfil e pagamento', User], ['/admin', 'Painel admin (equipe)', ChartLineUp]]
+  return (
+    <div>
+      <div className="bg-violet px-5 pb-6 pt-[max(20px,env(safe-area-inset-top))] text-white">
+        <div className="flex items-center gap-3"><span className="grid h-14 w-14 place-items-center rounded-full border-2 border-white text-lg font-bold">{s.user.name.split(' ').map(w => w[0]).slice(0, 2).join('')}</span>
+          <div><b className="block text-xl">{s.user.name}</b><span className="text-sm text-white/75">{plan.name}</span></div></div>
+      </div>
+      <div className="mx-5 -mt-0 mt-4 overflow-hidden rounded-3xl bg-white">
+        {ITEMS.map(([to, t, Ic]) => <Link key={to} to={to} className="flex items-center gap-4 border-b border-line px-4 py-4 last:border-0"><Ic size={22} className="text-royal" /><span className="flex-1 font-medium">{t}</span><CaretRight size={18} className="text-muted" /></Link>)}
+      </div>
+      <button onClick={() => { s.set({ signedIn: false }); nav('/bem-vindo') }} className="mx-5 mt-4 flex items-center gap-2 font-semibold text-danger"><SignOut size={20} />Sair</button>
+    </div>
+  )
+}
+
+export function Profile() {
+  const s = useStore()
+  const nav = useNavigate()
+  const [u, setU] = useState(s.user)
+  const [resetAsk, setResetAsk] = useState(false)
+  return (
+    <div className="lg:max-w-2xl">
+      <PageHead title="Perfil" />
+      <form className="grid gap-4 px-5 lg:px-0" onSubmit={e => { e.preventDefault(); s.set({ user: u }); s.say('Dados salvos') }}>
+        <label><span className="label">Nome</span><input id="pf-name" className="field" value={u.name} onChange={e => setU({ ...u, name: e.target.value })} /></label>
+        <label><span className="label">E-mail</span><input id="pf-email" className="field" type="email" value={u.email} onChange={e => setU({ ...u, email: e.target.value })} /></label>
+        <label><span className="label">WhatsApp</span><input id="pf-phone" className="field" value={u.phone} onChange={e => setU({ ...u, phone: e.target.value })} /></label>
+        <Btn kind="royal" type="submit">Salvar alterações</Btn>
+      </form>
+      <h2 className="mt-8 px-5 text-lg font-semibold lg:px-0">Formas de pagamento</h2>
+      <div className="mx-5 mt-3 grid gap-2 lg:mx-0">
+        <div className="flex items-center gap-3 rounded-2xl bg-white p-4"><QrCode size={24} className="text-[#32BCAD]" weight="fill" /><span className="flex-1"><b className="block">Pix recorrente</b><span className="text-sm text-muted">Assinatura mensal</span></span><span className="rounded-full bg-lime/20 px-2.5 py-1 text-xs font-bold text-leaf">Principal</span></div>
+        <div className="flex items-center gap-3 rounded-2xl bg-white p-4"><span className="rounded-md bg-slate px-2 py-1 text-[10px] font-bold text-white">VISA</span><span className="flex-1"><b className="block">Crédito •••• 4821</b><span className="text-sm text-muted">Vence 08/29</span></span></div>
+      </div>
+      <div className="mx-5 mt-8 rounded-3xl border-2 border-dashed border-line p-4 text-sm lg:mx-0">
+        <b>Dados de demonstração</b><p className="mt-1 text-muted">Volta o app para o estado inicial, com os veículos e agendamentos de exemplo.</p>
+        {resetAsk ? <div className="mt-3 flex gap-2"><Btn size="sm" kind="dark" onClick={() => { s.reset(); setResetAsk(false); s.say('Demonstração reiniciada'); nav('/') }}>Reiniciar</Btn><Btn size="sm" kind="ghost" onClick={() => setResetAsk(false)}>Cancelar</Btn></div>
+          : <Btn size="sm" kind="ghost" className="mt-3" onClick={() => setResetAsk(true)}>Reiniciar demonstração</Btn>}
+      </div>
+    </div>
+  )
+}
