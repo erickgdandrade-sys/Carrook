@@ -1,0 +1,687 @@
+<title>Carrook App</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,800&display=swap">
+<style>
+/* Layout: protótipo em moldura de celular (app do motorista) + painel web (admin), alternados no topo.
+   Visual único e fixo da marca Carrook (não muda com tema claro/escuro). */
+:root{
+  --gelo:#F9FDFF; --indigo:#3A43A4; --azul:#1F55E1; --violeta:#5A66F6;
+  --verde:#41D92A; --folha:#4EA531; --preto:#0A0A0A;
+  --ink:#141833; --muted:#6A7090; --line:#E3E7F5; --soft:#EEF1FB; --card:#FFFFFF;
+  --warn:#F2A516; --bad:#E5484D;
+  /* Troque por 'Neulis Neue' quando o kit da Adobe Fonts estiver ativo */
+  --font:'Outfit','Neulis Neue',system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--soft);color:var(--ink);font-family:var(--font);font-size:15px;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--verde);outline-offset:2px}
+svg{display:block}
+[hidden]{display:none!important}
+.plan.hl .btn.l{background:#fff;color:var(--indigo)}
+
+/* ---------- Topo do protótipo ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding-block:14px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  background:var(--indigo);color:#fff}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.02em;font-size:20px}
+.brand small{font-weight:400;font-size:12px;opacity:.7;letter-spacing:.06em;text-transform:uppercase}
+.switch{display:flex;background:rgba(255,255,255,.12);border-radius:999px;padding:4px}
+.switch button{padding:8px 16px;border-radius:999px;font-weight:600;font-size:14px;color:#fff}
+.switch button[aria-pressed="true"]{background:var(--verde);color:var(--preto)}
+
+/* ---------- Área do app ---------- */
+.stage{display:flex;justify-content:center;gap:40px;padding-block:32px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.side{width:240px;display:flex;flex-direction:column;gap:6px;padding-top:20px}
+.side h3{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.side button{text-align:left;padding:9px 12px;border-radius:10px;font-weight:500;color:var(--ink)}
+.side button:hover{background:#fff}
+.side button[aria-current="true"]{background:#fff;color:var(--azul);font-weight:700}
+.side p{font-size:13px;color:var(--muted);line-height:1.5;margin:14px 0 0}
+
+.phone{width:390px;height:812px;border-radius:52px;background:var(--preto);padding:12px;box-shadow:0 30px 60px -20px rgba(31,40,110,.45);flex:none;position:relative}
+.screen{width:100%;height:100%;border-radius:42px;overflow:hidden;background:var(--gelo);position:relative;display:flex;flex-direction:column}
+.notch{position:absolute;top:22px;left:50%;transform:translateX(-50%);width:110px;height:32px;border-radius:20px;background:var(--preto);z-index:30}
+.status{height:50px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 6px;font-size:14px;font-weight:600}
+.view{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-width:none}
+.view::-webkit-scrollbar{display:none}
+
+@media (max-width:860px){.side{display:none}}
+@media (max-width:440px){
+  .stage{padding:0}
+  .phone{width:100%;height:calc(100dvh - 120px);min-height:640px;border-radius:0;padding:0;box-shadow:none}
+  .screen{border-radius:0}.notch{display:none}
+}
+
+/* ---------- Componentes do app ---------- */
+.on-blue{color:#fff}
+.hdr{background:var(--violeta);color:#fff;padding:6px 20px 64px}
+.hdr-row{display:flex;align-items:center;justify-content:space-between}
+.hello{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px}
+.avatar{width:34px;height:34px;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;font-size:13px;font-weight:700}
+.iconbtn{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.14);position:relative}
+.dot-badge{position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--verde);border:2px solid var(--violeta)}
+.pad{padding:0 20px}
+.sec-title{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 10px;font-weight:600;font-size:15px}
+.sec-title button{font-size:13px;color:var(--azul);font-weight:600}
+
+.vcar{margin:-52px 20px 0;background:var(--card);border-radius:22px;padding:16px 18px 14px;box-shadow:0 12px 30px -14px rgba(58,67,164,.35);position:relative}
+.vcar .plate{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.12em;padding:3px 8px;border-radius:6px;background:var(--soft);color:var(--indigo)}
+.vcar h2{margin:6px 0 2px;font-size:20px;font-weight:700}
+.kv{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:4px 0}
+.kv b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:#E9FBE6;color:#23731A}
+.chip.blue{background:#E8EEFF;color:var(--azul)}
+.chip.warn{background:#FFF4DC;color:#9A6200}
+.chip.bad{background:#FDE8E8;color:#B3261E}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:12px}
+.dots i{width:7px;height:7px;border-radius:9px;background:var(--line);transition:.2s}
+.dots i.on{width:22px;background:var(--verde)}
+
+.health{display:flex;gap:14px;align-items:center;background:var(--indigo);color:#fff;border-radius:20px;padding:16px;margin-top:14px}
+.ring{width:66px;height:66px;flex:none;position:relative}
+.ring span{position:absolute;inset:0;display:grid;place-items:center;font-weight:800;font-size:18px}
+.health p{margin:2px 0 0;font-size:13px;opacity:.8;line-height:1.4}
+.health strong{font-size:15px}
+
+.alert{display:flex;gap:12px;align-items:center;padding:12px 14px;background:var(--card);border-radius:16px;border:1px solid var(--line)}
+.alert + .alert{margin-top:8px}
+.alert .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none}
+.alert .txt{flex:1;min-width:0}
+.alert .txt b{display:block;font-size:14px;font-weight:600}
+.alert .txt small{color:var(--muted);font-size:12px}
+.bar{height:6px;border-radius:6px;background:var(--soft);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;border-radius:6px}
+
+.hscroll{display:flex;gap:12px;overflow-x:auto;padding:2px 20px 8px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.hscroll::-webkit-scrollbar{display:none}
+.svc{flex:none;width:210px;scroll-snap-align:start;background:var(--card);border-radius:18px;padding:14px;border:1px solid var(--line)}
+.svc .top2{display:flex;gap:10px;align-items:center}
+.svc .ic{width:40px;height:40px;border-radius:12px;background:var(--soft);display:grid;place-items:center;color:var(--azul);flex:none}
+.svc b{font-size:14px;font-weight:600;display:block}
+.svc small{font-size:12px;color:var(--muted)}
+.svc .price{font-size:18px;font-weight:700;margin:10px 0 2px;font-variant-numeric:tabular-nums}
+.svc .old{font-size:12px;color:var(--muted);text-decoration:line-through}
+.btns{display:flex;gap:8px;margin-top:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;font-weight:600;font-size:13px;padding:8px 14px}
+.btn.g{background:var(--verde);color:var(--preto)}
+.btn.l{background:var(--soft);color:var(--indigo)}
+.btn.b{background:var(--azul);color:#fff}
+.btn.o{border:1.5px solid rgba(255,255,255,.8);color:#fff}
+.btn.big{width:100%;padding:15px;font-size:16px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+.blog{display:flex;align-items:center;justify-content:space-between;background:var(--indigo);color:#fff;border-radius:18px;padding:16px 18px;overflow:hidden;position:relative}
+.blog b{font-size:16px}
+.blog small{display:block;opacity:.75;font-size:12px;margin-top:2px}
+
+.tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid var(--line);padding:8px 6px 22px}
+.tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:500;color:var(--muted)}
+.tabbar button[aria-current="true"]{color:var(--folha);font-weight:700}
+.tabbar button[aria-current="true"] svg{color:var(--verde)}
+
+.subhdr{display:flex;align-items:center;gap:10px;padding:8px 16px 14px}
+.subhdr h1{font-size:20px;margin:0;font-weight:700}
+.back{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#fff;border:1px solid var(--line)}
+
+.list{background:var(--card);border-radius:18px;border:1px solid var(--line);overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.row:last-child{border-bottom:0}
+.row .grow{flex:1;min-width:0}
+.row b{font-weight:600;font-size:14px;display:block}
+.row small{color:var(--muted);font-size:12px}
+
+.filters{display:flex;gap:8px;overflow-x:auto;padding:0 20px 12px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filters button{flex:none;padding:8px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:13px;font-weight:500}
+.filters button[aria-pressed="true"]{background:var(--indigo);border-color:var(--indigo);color:#fff}
+
+.shop{background:var(--card);border-radius:18px;border:1px solid var(--line);padding:14px;display:flex;gap:12px;width:100%;text-align:left}
+.shop + .shop{margin-top:10px}
+.shop.rec{border:2px solid var(--verde)}
+.shop .logo{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-weight:800;color:#fff;flex:none;font-size:18px}
+.shop .grow{flex:1;min-width:0}
+.shop b{font-size:15px;font-weight:600}
+.meta{display:flex;gap:10px;font-size:12px;color:var(--muted);margin-top:3px;flex-wrap:wrap}
+.disc{font-weight:800;color:var(--folha);font-size:18px;text-align:right;white-space:nowrap}
+.disc small{display:block;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.recflag{display:inline-flex;align-items:center;gap:5px;background:var(--verde);color:var(--preto);font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;margin-bottom:6px}
+
+.days{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.days button,.hours button{border-radius:14px;background:#fff;border:1px solid var(--line);padding:10px 4px;text-align:center;font-weight:600}
+.days button small{display:block;font-size:11px;color:var(--muted);font-weight:500}
+.days button[aria-pressed="true"],.hours button[aria-pressed="true"]{background:var(--azul);color:#fff;border-color:var(--azul)}
+.days button[aria-pressed="true"] small{color:#fff;opacity:.8}
+.hours{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.hours button{padding:10px 0;font-size:14px}
+.hours button:disabled{opacity:.35;text-decoration:line-through;cursor:not-allowed}
+
+.pay{display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;background:#fff;border:1.5px solid var(--line);width:100%;text-align:left}
+.pay + .pay{margin-top:8px}
+.pay[aria-pressed="true"]{border-color:var(--azul);background:#F3F6FF}
+.radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center}
+.pay[aria-pressed="true"] .radio{border-color:var(--azul)}
+.pay[aria-pressed="true"] .radio::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--azul)}
+.sumline{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;font-variant-numeric:tabular-nums}
+.sumline.total{font-weight:700;font-size:17px;border-top:1px dashed var(--line);margin-top:6px;padding-top:12px}
+.sumline .green{color:var(--folha);font-weight:600}
+
+.plan{border-radius:20px;padding:18px;background:#fff;border:1.5px solid var(--line);position:relative}
+.plan + .plan{margin-top:12px}
+.plan.cur{border-color:var(--azul)}
+.plan.hl{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.plan h3{margin:0;font-size:18px}
+.plan .p{font-size:26px;font-weight:800;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.plan .p small{font-size:13px;font-weight:500;opacity:.7}
+.plan ul{list-style:none;padding:0;margin:10px 0 14px;display:grid;gap:6px;font-size:13px}
+.plan li{display:flex;gap:8px;align-items:flex-start}
+.plan li::before{content:"";width:16px;height:16px;flex:none;margin-top:1px;border-radius:50%;background:var(--verde) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.2l2.6 2.6L12 5.4' fill='none' stroke='%230A0A0A' stroke-width='2'/%3E%3C/svg%3E") center/16px no-repeat}
+.note{font-size:12px;color:var(--muted);line-height:1.5;background:#fff;border:1px dashed var(--line);border-radius:14px;padding:10px 12px}
+
+.field{display:block;margin-top:12px}
+.field span{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.field input,.field select{width:100%;padding:13px 14px;border-radius:14px;border:1.5px solid var(--line);background:#fff;font-size:16px}
+.field input:focus,.field select:focus{border-color:var(--azul);outline:none}
+.toggle{width:46px;height:28px;border-radius:999px;background:var(--line);position:relative;flex:none;transition:.2s}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle[aria-checked="true"]{background:var(--verde)}
+.toggle[aria-checked="true"]::after{left:21px}
+
+.toast{position:absolute;left:16px;right:16px;bottom:96px;background:var(--preto);color:#fff;border-radius:14px;padding:12px 14px;font-size:14px;z-index:40;display:flex;gap:10px;align-items:center;animation:up .25s ease}
+@keyframes up{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Login */
+.login{height:100%;background:var(--azul);color:#fff;display:flex;flex-direction:column;padding:30px 28px 40px;position:relative;overflow:hidden}
+.login .pattern{position:absolute;inset:0;opacity:.13;pointer-events:none}
+.login .mid{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px;position:relative}
+.login .word{font-weight:800;font-size:44px;letter-spacing:.01em}
+.login .tag{font-size:16px;opacity:.9;text-align:center;line-height:1.4}
+.login .tag em{font-style:italic;font-weight:800;color:var(--verde)}
+.login .acts{display:grid;gap:12px;position:relative}
+.login .legal{font-size:12px;text-align:center;opacity:.75;text-decoration:underline}
+
+/* ---------- Admin ---------- */
+.admin{display:grid;grid-template-columns:220px 1fr;min-height:calc(100% - 66px)}
+.anav{background:#fff;border-right:1px solid var(--line);padding:20px 12px;display:flex;flex-direction:column;gap:4px}
+.anav button{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-align:left;font-weight:500;color:var(--muted)}
+.anav button[aria-current="true"]{background:var(--soft);color:var(--indigo);font-weight:700}
+.amain{padding-block:24px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));min-width:0}
+.amain h1{margin:0 0 4px;font-size:26px}
+.amain .sub{color:var(--muted);margin:0 0 20px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.kpi{background:#fff;border-radius:16px;padding:16px;border:1px solid var(--line)}
+.kpi small{color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.kpi b{display:block;font-size:26px;font-weight:700;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--folha);font-weight:600}
+.panel{background:#fff;border-radius:16px;border:1px solid var(--line);padding:18px;margin-top:16px;min-width:0}
+.panel h2{margin:0 0 12px;font-size:16px}
+.grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.grid2 .panel{margin-top:16px}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:11px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.ex{display:inline-block;font-size:11px;font-weight:600;color:var(--muted);background:var(--soft);padding:3px 8px;border-radius:6px;margin-left:8px;vertical-align:middle}
+.hbars{display:grid;gap:10px}
+.hbars div{display:grid;grid-template-columns:90px 1fr 44px;gap:10px;align-items:center;font-size:13px}
+.hbars .t{height:10px;border-radius:6px;background:var(--soft);overflow:hidden}
+.hbars .t i{display:block;height:100%;background:var(--azul);border-radius:6px}
+.hbars b{text-align:right;font-variant-numeric:tabular-nums}
+.inp-sm{width:70px;padding:6px 8px;border-radius:8px;border:1.5px solid var(--line);text-align:right}
+@media (max-width:960px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:1fr}}
+@media (max-width:700px){.admin{grid-template-columns:1fr}.anav{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:10px 12px}.anav button{flex:none}}
+</style>
+
+<header class="top">
+  <div class="brand"><span id="topLogo"></span>CARROOK <small>Protótipo · dados de exemplo</small></div>
+  <div class="switch" role="group" aria-label="Escolher visão">
+    <button id="modeApp" aria-pressed="true">App do motorista</button>
+    <button id="modeAdmin" aria-pressed="false">Painel admin</button>
+  </div>
+</header>
+
+<main id="appMode" class="stage">
+  <nav class="side" aria-label="Telas do app">
+    <h3>Telas</h3>
+    <div id="sideList" style="display:flex;flex-direction:column;gap:2px"></div>
+    <p>Navegue pelo celular ou pule direto para uma tela. Planos e valores conforme o pitch; o limite de veículos por plano é provisório.</p>
+  </nav>
+  <div class="phone">
+    <div class="screen">
+      <div class="notch"></div>
+      <div class="status" id="statusBar"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="view" id="view"></div>
+      <nav class="tabbar" id="tabbar" aria-label="Navegação principal"></nav>
+      <div id="toastHost"></div>
+    </div>
+  </div>
+</main>
+
+<main id="adminMode" hidden></main>
+
+<script>
+/* ================= Ícones ================= */
+const I = {
+  logo:(c='#fff',s=28)=>`<svg width="${s}" height="${s}" viewBox="0 0 100 100" aria-hidden="true"><path fill="${c}" d="M42 18A40 40 0 1 0 82 58H63A21 21 0 1 1 42 37Z"/><path fill="${c}" d="M52 18H82V47.7H63.5V36.8H52Z"/></svg>`,
+  home:`<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 3 10.2V21h6.5v-6h5v6H21V10.2z"/></svg>`,
+  bell:`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></svg>`,
+  wrench:`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5L13 18l-3 3-4-4 3-3 6.5-6.5a4 4 0 0 0-1-1zM15 4.2a4 4 0 0 1 4.8 4.8L17 8l-1-1z"/></svg>`,
+  menu:`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>`,
+  back:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>`,
+  chev:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA0BC" stroke-width="2" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>`,
+  pin:`<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>`,
+  star:`<svg width="13" height="13" viewBox="0 0 24 24" fill="#F2A516"><path d="M12 2l3 6.6 7 .7-5.3 4.7 1.6 7L12 17.3 5.7 21l1.6-7L2 9.3l7-.7z"/></svg>`,
+  oil:`<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3s-6 7-6 11a6 6 0 0 0 12 0c0-4-6-11-6-11z"/></svg>`,
+  tire:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg>`,
+  brake:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="6"/><path d="M4.5 6.5a10 10 0 0 0 0 11M19.5 6.5a10 10 0 0 1 0 11"/></svg>`,
+  filter:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h8"/></svg>`,
+  battery:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M7 4v3M17 4v3M7 13h4M15 11v4M13 13h4"/></svg>`,
+  car:`<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M5 11l1.6-4.2A2 2 0 0 1 8.5 5.5h7a2 2 0 0 1 1.9 1.3L19 11a2 2 0 0 1 2 2v4h-2v2h-3v-2H8v2H5v-2H3v-4a2 2 0 0 1 2-2zm2.2 0h9.6l-1-2.9a1 1 0 0 0-1-.6H9.2a1 1 0 0 0-1 .6zM6.5 15a1.3 1.3 0 1 0 0-2.6 1.3 1.3 0 0 0 0 2.6zm11 0a1.3 1.3 0 1 0 0-2.6 1.3 1.3 0 0 0 0 2.6z"/></svg>`,
+  gps:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>`,
+  check:`<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`,
+  pix:`<svg width="22" height="22" viewBox="0 0 24 24" fill="#32BCAD"><path d="M12 2.5l4 4-4 4-4-4zM12 13.5l4 4-4 4-4-4zM2.5 12l4-4 4 4-4 4zM13.5 12l4-4 4 4-4 4z"/></svg>`,
+  card:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F55E1" stroke-width="2"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg>`,
+  boleto:`<svg width="22" height="22" viewBox="0 0 24 24" fill="#3A43A4"><path d="M3 5h2v14H3zM7 5h1v14H7zM10 5h2v14h-2zM14 5h1v14h-1zM17 5h1v14h-1zM20 5h1v14h-1z"/></svg>`,
+  wallet:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M16 12.5h2M3 9h18"/></svg>`,
+  seal:`<svg width="16" height="16" viewBox="0 0 24 24"><path fill="#1F55E1" d="M12 1.5l2.6 2 3.3-.2.9 3.2 2.7 1.9-1.2 3.1 1.2 3.1-2.7 1.9-.9 3.2-3.3-.2-2.6 2-2.6-2-3.3.2-.9-3.2-2.7-1.9 1.2-3.1-1.2-3.1 2.7-1.9.9-3.2 3.3.2z"/><path d="M8 12.2l2.7 2.7L16.2 9.4" fill="none" stroke="#fff" stroke-width="2.2"/></svg>`,
+  fuel:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16M3 21h13M7 8h5M15 10h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V9l-3-3"/></svg>`,
+  plus:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
+  dash:`<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v10H3zM13 3h8v6h-8zM13 11h8v10h-8zM3 15h8v6H3z"/></svg>`,
+  cal:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`,
+  shop:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l2-5h14l2 5M4 9v11h16V9M3 9h18M9 20v-6h6v6"/></svg>`,
+  tag:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor"/></svg>`,
+  users:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></svg>`,
+};
+const carArt=(color='#1D1F2B')=>`<svg viewBox="0 0 300 120" width="100%" height="110" aria-hidden="true">
+ <ellipse cx="150" cy="108" rx="125" ry="8" fill="#000" opacity=".12"/>
+ <path d="M30 86c0-14 6-22 20-25l26-6 22-24c5-5 11-8 18-8h78c8 0 14 3 19 9l20 23 32 7c11 2 16 9 16 20v8c0 5-3 8-8 8H38c-5 0-8-3-8-8z" fill="${color}"/>
+ <path d="M104 33h40v24H84zM152 33h33c4 0 7 1 9 4l15 20h-57z" fill="#C9D3F5" opacity=".85"/>
+ <circle cx="84" cy="96" r="20" fill="#14151C"/><circle cx="84" cy="96" r="9" fill="#9AA3BF"/>
+ <circle cx="222" cy="96" r="20" fill="#14151C"/><circle cx="222" cy="96" r="9" fill="#9AA3BF"/>
+ <rect x="258" y="70" width="12" height="6" rx="2" fill="#F2A516"/><rect x="32" y="72" width="10" height="5" rx="2" fill="#E5484D"/>
+</svg>`;
+
+/* ================= Dados de exemplo ================= */
+const TODAY = new Date('2026-11-17T09:41:00');
+const brl = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const km = v => Math.round(v).toLocaleString('pt-BR')+' km';
+
+/* Planos do pitch (valores "a partir de"). Limite de veículos: provisório. */
+const PLANS=[
+  {id:'clube',name:'Clube Carrook',short:'Clube',price:50,cars:1,copay:null,feats:['Revisão anual de até 80 itens','Troca de óleo e filtro gratuita','Desconto de até 20% em peças','Descontos em combustível','1 veículo']},
+  {id:'start',name:'Carrook Start',short:'Start',price:120,cars:2,copay:.5,hl:true,feats:['Cobertura total de até 80 itens','Coparticipação de 50%','Benefícios do Clube Carrook','Descontos em combustível','Até 2 veículos']},
+  {id:'premium',name:'Carrook Premium',short:'Premium',price:200,cars:3,copay:.2,feats:['Cobertura total de até 80 itens','Coparticipação de 20%','Benefícios do Clube Carrook','Carência reduzida','Até 3 veículos']},
+];
+const INCLUDED=['revisao','oleo']; // benefícios do Clube, valem para todos os planos (1x por ano)
+function priceFor(shop,svc){
+  const base=SERVICES[svc].base,p=plan();
+  if(INCLUDED.includes(svc)) return {base,total:0,label:'Incluído no plano (1x/ano)',off:base};
+  if(p.copay){const t=Math.round(base*(1-shop.disc/100)*p.copay*100)/100;return {base,total:t,label:`Cobertura ${p.short} · você paga ${p.copay*100}%`,off:base-t}}
+  const t=Math.round(base*(1-shop.disc/100)*100)/100;return {base,total:t,label:`Desconto parceiro (${shop.disc}%)`,off:base-t};
+}
+
+const state={
+  screen:'login', stack:[], vIdx:0, plan:'start', autoKm:true,
+  filter:'desconto', service:'freios', shopId:null, day:1, hour:null, pay:'pix', toast:null,
+  adminPage:'overview',
+  vehicles:[
+    {id:1,model:'Jeep Renegade',year:2022,plate:'EGM-9R71',color:'#1D1F2B',km:11500,kmDate:'2026-10-20',avgDay:38,
+     items:{oleo:{last:5000,lastDate:'2026-04-10'},filtro:{last:5000,lastDate:'2026-04-10'},pneus:{last:0,lastDate:'2025-11-01'},freios:{last:0,lastDate:'2025-11-01'},bateria:{last:0,lastDate:'2025-11-01'}}},
+    {id:2,model:'Fiat Argo',year:2020,plate:'QJT-4E28',color:'#B3261E',km:48200,kmDate:'2026-11-10',avgDay:22,
+     items:{oleo:{last:40000,lastDate:'2026-05-02'},filtro:{last:30000,lastDate:'2025-08-15'},pneus:{last:30000,lastDate:'2025-08-15'},freios:{last:40000,lastDate:'2026-05-02'},bateria:{last:20000,lastDate:'2023-09-01'}}},
+  ],
+};
+const ITEMS={
+  oleo:{name:'Troca de óleo',icon:'oil',km:10000,months:12},
+  filtro:{name:'Filtro de ar',icon:'filter',km:15000,months:12},
+  pneus:{name:'Rodízio de pneus',icon:'tire',km:10000,months:12},
+  freios:{name:'Pastilhas de freio',icon:'brake',km:30000,months:24},
+  bateria:{name:'Bateria',icon:'battery',km:60000,months:36},
+};
+const SERVICES={
+  revisao:{name:'Revisão completa',icon:'wrench',base:1180},
+  oleo:{name:'Troca de óleo + filtro',icon:'oil',base:320},
+  freios:{name:'Pastilhas de freio',icon:'brake',base:460},
+  pneus:{name:'Alinhamento e balanceamento',icon:'tire',base:180},
+};
+const SHOPS=[
+  {id:1,name:'Auto Center Próspera',color:'#1F55E1',dist:2.1,rate:4.9,reviews:312,disc:22,addr:'R. Henrique Lage, 1240 · Criciúma'},
+  {id:2,name:'Mecânica Rio Maina',color:'#4EA531',dist:5.4,rate:4.7,reviews:188,disc:18,addr:'Av. Universitária, 680 · Criciúma'},
+  {id:3,name:'Oficina Centro Sul',color:'#3A43A4',dist:1.2,rate:4.6,reviews:97,disc:12,addr:'R. Cel. Pedro Benedet, 315 · Centro'},
+  {id:4,name:'Garagem Pinheirinho',color:'#5A66F6',dist:3.8,rate:4.8,reviews:241,disc:15,addr:'R. Imigrante Meller, 52 · Pinheirinho'},
+];
+
+/* ================= Cálculos ================= */
+const daysSince = d => Math.max(0,Math.round((TODAY-new Date(d+'T00:00:00'))/864e5));
+const monthsSince = d => daysSince(d)/30.44;
+const curKm = v => state.autoKm ? v.km + daysSince(v.kmDate)*v.avgDay : v.km;
+function itemStatus(v,key){
+  const it=ITEMS[key], h=v.items[key], k=curKm(v);
+  const pk=(k-h.last)/it.km, pt=monthsSince(h.lastDate)/it.months, p=Math.max(pk,pt);
+  const kmLeft=Math.round(it.km-(k-h.last));
+  const st=p>=1?'bad':p>=.75?'warn':'ok';
+  const why = pt>pk ? 'por tempo' : 'por km';
+  return {p,kmLeft,st,why};
+}
+function health(v){
+  const ps=Object.keys(ITEMS).map(k=>Math.min(1.3,itemStatus(v,k).p));
+  const score=Math.round(100-ps.reduce((a,b)=>a+Math.max(0,b-.4),0)/ps.length*100);
+  return Math.max(10,Math.min(100,score));
+}
+const plan=()=>PLANS.find(p=>p.id===state.plan);
+const shopPrice=(s,svc)=>priceFor(s,svc).total;
+function sortedShops(){
+  const a=[...SHOPS];
+  if(state.filter==='desconto')a.sort((x,y)=>y.disc-x.disc);
+  if(state.filter==='perto')a.sort((x,y)=>x.dist-y.dist);
+  if(state.filter==='avaliacao')a.sort((x,y)=>y.rate-x.rate);
+  return a;
+}
+const recommended=()=>[...SHOPS].sort((x,y)=>(y.disc*0.7+y.rate*4-y.dist)-(x.disc*0.7+x.rate*4-x.dist))[0];
+
+/* ================= Navegação ================= */
+const TABS=[['home','Início',I.home],['alerts','Notificações',I.bell],['services','Serviços',I.wrench],['menu','Menu',I.menu]];
+const SCREENS=[['login','Entrar / cadastro'],['home','Início'],['vehicle','Saúde do veículo'],['alerts','Notificações'],['services','Oficinas e serviços'],['shop','Agendar na oficina'],['checkout','Pagamento'],['success','Confirmação'],['menu','Menu'],['plans','Planos'],['garage','Meus veículos'],['history','Histórico']];
+function go(s,push=true){
+  if(push && state.screen!==s) state.stack.push(state.screen);
+  state.screen=s; if(s==='shop'&&!state.shopId) state.shopId=recommended().id;
+  render(); document.getElementById('view').scrollTop=0;
+}
+function back(){ go(state.stack.pop()||'home',false); }
+function toast(msg){ state.toast=msg; renderToast(); clearTimeout(toast.t); toast.t=setTimeout(()=>{state.toast=null;renderToast()},2600); }
+
+/* ================= Telas ================= */
+const sub=(t)=>`<div class="subhdr"><button class="back" data-act="back" aria-label="Voltar">${I.back}</button><h1>${t}</h1></div>`;
+const statusIc={ok:['#E9FBE6','#23731A'],warn:['#FFF4DC','#9A6200'],bad:['#FDE8E8','#B3261E']};
+const statusTxt=s=>({ok:'Em dia',warn:'Em breve',bad:'Atrasado'})[s];
+const barColor=s=>({ok:'var(--verde)',warn:'var(--warn)',bad:'var(--bad)'})[s];
+
+function alertRows(v,limit){
+  const rows=Object.keys(ITEMS).map(k=>({k,...itemStatus(v,k)})).sort((a,b)=>b.p-a.p).slice(0,limit);
+  return rows.map(r=>{const it=ITEMS[r.k],[bg,fg]=statusIc[r.st];
+    const info=r.st==='bad'? `Atrasado ${r.why}` : r.kmLeft>0?`Faltam ~${km(r.kmLeft)}`:'Prazo vencendo';
+    return `<button class="alert" style="width:100%;text-align:left" data-act="book" data-svc="${r.k==='oleo'||r.k==='filtro'?'oleo':r.k==='freios'?'freios':r.k==='pneus'?'pneus':'revisao'}">
+      <div class="ic" style="background:${bg};color:${fg}">${I[it.icon]}</div>
+      <div class="txt"><b>${it.name}</b><small>${info}</small><div class="bar"><i style="width:${Math.min(100,r.p*100)}%;background:${barColor(r.st)}"></i></div></div>
+      <span class="chip ${r.st==='ok'?'':r.st}">${statusTxt(r.st)}</span></button>`}).join('');
+}
+
+const V={
+login:()=>`<div class="login">
+  <svg class="pattern" width="100%" height="100%"><defs><pattern id="pt" width="80" height="80" patternUnits="userSpaceOnUse"><g transform="translate(14 14) scale(.5)"><path fill="#fff" d="M42 18A40 40 0 1 0 82 58H63A21 21 0 1 1 42 37Z"/><path fill="#fff" d="M52 18H82V47.7H63.5V36.8H52Z"/></g></pattern></defs><rect width="100%" height="100%" fill="url(#pt)"/></svg>
+  <div class="mid">${I.logo('#fff',84)}<div class="word">CARROOK</div>
+    <div class="tag"><em>Facilitar &amp; transformar</em><br>em rotina a manutenção<br>preventiva do seu veículo.</div></div>
+  <div class="acts">
+    <button class="btn o big" data-go="home">Entrar</button>
+    <button class="btn g big" data-go="plans">Crie sua conta</button>
+    <button class="legal" data-toast="Termos de uso e política de privacidade (em breve)">Privacidade e Termos</button>
+  </div></div>`,
+
+home:()=>{const v=state.vehicles[state.vIdx],h=health(v),p=plan();
+  const late=Object.keys(ITEMS).filter(k=>itemStatus(v,k).st!=='ok').length;
+  return `<div class="hdr"><div class="hdr-row"><div class="hello"><span class="avatar">MC</span>Olá, Marina</div>
+    <button class="iconbtn" data-go="alerts" aria-label="Notificações">${I.bell}<span class="dot-badge"></span></button></div></div>
+  <div class="vcar">
+    <div style="display:flex;justify-content:space-between;align-items:center"><span class="plate">${v.plate}</span><span class="chip blue">${p.name}</span></div>
+    ${carArt(v.color)}
+    <h2>${v.model} <span style="font-weight:400;color:var(--muted);font-size:15px">${v.year}</span></h2>
+    <div class="kv"><span>Quilometragem</span><b>${km(curKm(v))}</b></div>
+    <div class="kv"><span>${state.autoKm?'Estimada pelo app · informada há '+daysSince(v.kmDate)+' dias':'Informada por você'}</span><button style="color:var(--azul);font-weight:600;font-size:13px" data-go="vehicle">Atualizar</button></div>
+    <div class="dots">${state.vehicles.map((_,i)=>`<i class="${i===state.vIdx?'on':''}"></i>`).join('')}</div>
+    ${state.vehicles.length>1?`<button data-act="nextcar" aria-label="Próximo veículo" style="position:absolute;right:10px;top:50%;width:32px;height:32px;border-radius:50%;background:var(--soft);display:grid;place-items:center">${I.chev}</button>`:''}
+  </div>
+  <div class="pad">
+    <button class="health" style="width:100%;text-align:left" data-go="vehicle">
+      <div class="ring"><svg viewBox="0 0 36 36" width="66" height="66"><circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="4"/><circle cx="18" cy="18" r="15" fill="none" stroke="${h>70?'#41D92A':h>45?'#F2A516':'#E5484D'}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${h*0.9425} 100" transform="rotate(-90 18 18)"/></svg><span>${h}</span></div>
+      <div><strong>Saúde do veículo</strong><p>${late?`${late} ${late>1?'itens pedem':'item pede'} atenção. Toque para ver o plano de manutenção.`:'Tudo em dia. Continue assim!'}</p></div>
+    </button>
+    <div class="sec-title">Próximas manutenções <button data-go="vehicle">Ver todas</button></div>
+    ${alertRows(v,2)}
+    <div class="sec-title">Serviços para seu veículo <button data-go="services">Ver oficinas</button></div>
+  </div>
+  <div class="hscroll">${Object.entries(SERVICES).map(([k,s])=>{const best=Math.min(...SHOPS.map(x=>shopPrice(x,k)));return `<div class="svc">
+    <div class="top2"><div class="ic">${I[s.icon]}</div><div><b>${s.name}</b><small>A partir de</small></div></div>
+    <div class="price">${best===0?'Incluído':brl(best)}</div><div class="old">${brl(s.base)} sem Carrook</div>
+    <div class="btns"><button class="btn g" data-act="book" data-svc="${k}">Contratar</button><button class="btn l" data-act="book" data-svc="${k}">Saiba mais</button></div></div>`}).join('')}</div>
+  <div class="pad" style="padding-bottom:24px">
+    <div class="sec-title">Seus benefícios</div>
+    <button class="alert" style="width:100%;text-align:left" data-toast="Mostre o QR Code no caixa do posto parceiro">
+      <div class="ic" style="background:#E9FBE6;color:var(--folha)">${I.fuel}</div>
+      <div class="txt"><b>R$ 0,20 off por litro</b><small>Posto Parceiro BR-101 · 1,8 km</small></div><span class="chip">Usar</span></button>
+    <button class="alert" style="width:100%;text-align:left" data-act="book" data-svc="revisao">
+      <div class="ic" style="background:#E8EEFF;color:var(--azul)">${I.wrench}</div>
+      <div class="txt"><b>Revisão anual de 80 itens</b><small>Incluída no seu plano · ainda não usada em 2026</small></div><span class="chip blue">Agendar</span></button>
+    <div class="sec-title">Descubra mais</div>
+    <button class="blog" style="width:100%;text-align:left" data-toast="Blog Carrook: abre em breve">
+      <div><b>Acesse nosso blog</b><small>Quando trocar o óleo? 5 sinais do seu carro</small></div>${I.logo('rgba(255,255,255,.25)',56)}</button>
+  </div>`},
+
+vehicle:()=>{const v=state.vehicles[state.vIdx];
+  return sub('Saúde do veículo')+`<div class="pad">
+  <div class="list" style="padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:17px">${v.model}</b><span class="plate" style="font-size:11px;font-weight:700;letter-spacing:.12em;padding:3px 8px;border-radius:6px;background:var(--soft);color:var(--indigo)">${v.plate}</span></div>
+    <label class="field" for="kmInput"><span>Quilometragem atual do painel</span>
+      <input id="kmInput" inputmode="numeric" value="${Math.round(curKm(v))}"></label>
+    <button class="btn b big" style="margin-top:12px" data-act="savekm">Salvar quilometragem</button>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:16px">
+      <div style="color:var(--azul)">${I.gps}</div>
+      <div style="flex:1;font-size:13px;line-height:1.4"><b style="font-size:14px">Estimar automaticamente</b><br><span style="color:var(--muted)">O app detecta quando você está dirigindo e soma ~${v.avgDay} km/dia. Você pode corrigir quando quiser.</span></div>
+      <button class="toggle" role="switch" aria-checked="${state.autoKm}" aria-label="Estimar automaticamente" data-act="autokm"></button>
+    </div>
+  </div>
+  <div class="sec-title">Plano de manutenção</div>
+  ${alertRows(v,5)}
+  <p class="note" style="margin:14px 0 24px">Os prazos seguem o que vencer primeiro: quilometragem ou tempo desde a última troca. Intervalos de exemplo; no app real eles vêm do manual de cada modelo.</p>
+  </div>`},
+
+alerts:()=>{const all=[];state.vehicles.forEach(v=>Object.keys(ITEMS).forEach(k=>{const s=itemStatus(v,k);if(s.st!=='ok')all.push({v,k,...s})}));
+  all.sort((a,b)=>b.p-a.p);
+  return `<div class="subhdr"><h1>Notificações</h1></div><div class="pad">
+  ${all.map(a=>{const [bg,fg]=statusIc[a.st];return `<div class="alert"><div class="ic" style="background:${bg};color:${fg}">${I[ITEMS[a.k].icon]}</div>
+    <div class="txt"><b>${ITEMS[a.k].name} · ${a.v.model}</b><small>${a.st==='bad'?'Prazo vencido '+a.why+'. Agende para evitar desgaste.':'Faltam cerca de '+km(Math.max(a.kmLeft,0))+'.'}</small></div>
+    <button class="btn ${a.st==='bad'?'g':'l'}" data-act="book" data-svc="${a.k==='freios'?'freios':a.k==='pneus'?'pneus':a.k==='oleo'||a.k==='filtro'?'oleo':'revisao'}">Agendar</button></div>`}).join('')}
+  <div class="alert"><div class="ic" style="background:#E8EEFF;color:var(--azul)">${I.tag}</div><div class="txt"><b>Auto Center Próspera: 22% off</b><small>Desconto exclusivo de assinante até 30/11.</small></div></div>
+  <div class="alert"><div class="ic" style="background:#E8EEFF;color:var(--azul)">${I.gps}</div><div class="txt"><b>Quilometragem estimada</b><small>Você rodou ~${km(daysSince(state.vehicles[0].kmDate)*state.vehicles[0].avgDay)} desde a última atualização.</small></div><button class="btn l" data-go="vehicle">Conferir</button></div>
+  <div style="height:20px"></div></div>`},
+
+services:()=>{const rec=recommended();
+  return `<div class="subhdr"><h1>Oficinas parceiras</h1></div>
+  <div class="filters" role="group" aria-label="Serviço">${Object.entries(SERVICES).map(([k,s])=>`<button aria-pressed="${state.service===k}" data-act="svc" data-svc="${k}">${s.name}</button>`).join('')}</div>
+  <div class="filters" role="group" aria-label="Ordenar">${[['desconto','Maior desconto'],['perto','Mais perto'],['avaliacao','Melhor avaliadas']].map(([k,t])=>`<button aria-pressed="${state.filter===k}" data-act="filter" data-f="${k}">${t}</button>`).join('')}</div>
+  <div class="pad">
+  ${sortedShops().map(s=>`<button class="shop ${s.id===rec.id?'rec':''}" data-act="shop" data-id="${s.id}">
+    <div class="logo" style="background:${s.color}">${s.name.split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
+    <div class="grow">${s.id===rec.id?`<span class="recflag">${I.logo('#0A0A0A',12)} Indicada Carrook</span><br>`:''}<b>${s.name}</b> <span title="Selo parceiro Carrook" style="display:inline-block;vertical-align:-2px">${I.seal}</span>
+      <div class="meta"><span style="display:flex;gap:3px;align-items:center">${I.star}${s.rate.toFixed(1)}</span><span style="display:flex;gap:3px;align-items:center">${I.pin}${s.dist.toFixed(1).replace('.',',')} km</span></div>
+      <div style="margin-top:6px;font-weight:700;font-variant-numeric:tabular-nums">${shopPrice(s,state.service)===0?'Incluído no plano':brl(shopPrice(s,state.service))} <span style="font-weight:400;font-size:12px;color:var(--muted);text-decoration:line-through">${brl(SERVICES[state.service].base)}</span></div></div>
+    <div class="disc">-${s.disc}%<small>em peças</small></div></button>`).join('')}
+  <p class="note" style="margin:14px 0 24px">A Carrook indica a oficina com o melhor equilíbrio entre desconto, avaliação e distância. Você escolhe qualquer uma da lista.</p></div>`},
+
+shop:()=>{const s=SHOPS.find(x=>x.id===state.shopId),svc=SERVICES[state.service];
+  const days=[...Array(5)].map((_,i)=>{const d=new Date(TODAY);d.setDate(d.getDate()+i+1);return d});
+  const hours=['08:00','09:30','11:00','13:30','15:00','16:30','18:00','19:00'];
+  const busy=[1,4,7].map(i=>hours[(i+state.day)%hours.length]);
+  return sub('Agendar')+`<div class="pad">
+  <div class="shop" style="cursor:default"><div class="logo" style="background:${s.color}">${s.name.split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
+    <div class="grow"><b>${s.name}</b><div class="meta"><span>${s.addr}</span></div>
+    <div class="meta"><span style="display:flex;gap:3px;align-items:center">${I.star}${s.rate.toFixed(1)} (${s.reviews})</span><span>${s.dist.toFixed(1).replace('.',',')} km</span></div></div></div>
+  <div class="sec-title">Serviço</div>
+  <label class="field" for="svcSel" style="margin-top:0"><select id="svcSel" data-act="svcsel">${Object.entries(SERVICES).map(([k,x])=>`<option value="${k}" ${k===state.service?'selected':''}>${x.name}: ${brl(shopPrice(s,k))}</option>`).join('')}</select></label>
+  <div class="sec-title">Dia</div>
+  <div class="days">${days.map((d,i)=>`<button aria-pressed="${state.day===i}" data-act="day" data-i="${i}"><small>${d.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.','')}</small>${d.getDate()}</button>`).join('')}</div>
+  <div class="sec-title">Horário</div>
+  <div class="hours">${hours.map(h=>`<button aria-pressed="${state.hour===h}" ${busy.includes(h)?'disabled':''} data-act="hour" data-h="${h}">${h}</button>`).join('')}</div>
+  <div class="list" style="padding:14px 16px;margin-top:18px">
+    <div class="sumline"><span>${svc.name}</span><span>${brl(svc.base)}</span></div>
+    <div class="sumline"><span>${priceFor(s,state.service).label}</span><span class="green">-${brl(priceFor(s,state.service).off)}</span></div>
+    <div class="sumline total"><span>Você paga</span><span>${brl(shopPrice(s,state.service))}</span></div></div>
+  <div class="sec-title">O que dizem os clientes</div>
+  <div class="hscroll" style="padding:2px 0 8px">${[['Me salvou de um problemão!',5],['Serviço super rápido!',5],['Ótimos preços',4]].map(([q,n])=>`<div class="svc" style="width:190px"><div style="display:flex;gap:2px">${I.star.repeat(n)}</div><p style="margin:6px 0 0;font-size:13px">“${q}”</p></div>`).join('')}</div>
+  <button class="btn g big" style="margin:16px 0 24px" ${state.hour?'':'disabled'} data-go="${shopPrice(s,state.service)===0?'success':'checkout'}">${!state.hour?'Escolha um horário':shopPrice(s,state.service)===0?'Confirmar agendamento':'Continuar para pagamento'}</button></div>`},
+
+checkout:()=>{const s=SHOPS.find(x=>x.id===state.shopId),total=shopPrice(s,state.service);
+  const opts=[['pix','Pix','Aprovação na hora · 5% off extra',I.pix],['credito','Cartão de crédito','Visa final 4821 · até 6x sem juros',I.card],['debito','Cartão de débito','Elo final 0937',I.card],['carteira','Apple Pay / Google Pay','Pagamento por aproximação',I.wallet],['boleto','Boleto','Compensa em até 2 dias úteis',I.boleto]];
+  const final=state.pay==='pix'?total*.95:total;
+  return sub('Pagamento')+`<div class="pad">
+  ${opts.map(([k,t,d,ic])=>`<button class="pay" aria-pressed="${state.pay===k}" data-act="pay" data-p="${k}"><span class="radio"></span>${ic}<span class="grow" style="flex:1"><b style="display:block;font-size:14px">${t}</b><small style="color:var(--muted);font-size:12px">${d}</small></span></button>`).join('')}
+  ${state.pay==='credito'?`<label class="field" for="parc"><span>Parcelas</span><select id="parc">${[1,2,3,4,5,6].map(n=>`<option>${n}x de ${brl(total/n)} sem juros</option>`).join('')}</select></label>`:''}
+  <div class="list" style="padding:14px 16px;margin-top:16px">
+    <div class="sumline"><span>${SERVICES[state.service].name}</span><span>${brl(total)}</span></div>
+    <div class="sumline"><span>${s.name}</span><span>${state.hour}</span></div>
+    ${state.pay==='pix'?`<div class="sumline"><span>Desconto Pix</span><span class="green">-${brl(total*.05)}</span></div>`:''}
+    <div class="sumline total"><span>Total</span><span>${brl(final)}</span></div></div>
+  <button class="btn g big" style="margin:16px 0 24px" data-go="success">Pagar ${brl(final)}</button></div>`},
+
+success:()=>{const s=SHOPS.find(x=>x.id===state.shopId);const d=new Date(TODAY);d.setDate(d.getDate()+state.day+1);
+  return `<div style="min-height:100%;background:var(--azul);color:#fff;padding:40px 24px;display:flex;flex-direction:column;gap:22px;justify-content:center;text-align:center">
+  <div style="width:84px;height:84px;border-radius:50%;background:var(--verde);display:grid;place-items:center;margin:0 auto">${I.check}</div>
+  <div><h1 style="margin:0 0 8px;font-size:28px">Agendado!</h1><p style="margin:0;opacity:.85;line-height:1.5">${SERVICES[state.service].name}<br>${s.name}<br><b>${d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})} às ${state.hour}</b></p></div>
+  <div style="background:rgba(255,255,255,.12);border-radius:16px;padding:14px;font-size:13px;line-height:1.5">Vamos te lembrar um dia antes. Depois do serviço, o histórico do ${state.vehicles[state.vIdx].model} é atualizado sozinho.</div>
+  <button class="btn g big" data-act="finish">Voltar ao início</button></div>`},
+
+menu:()=>{const p=plan();
+  return `<div class="hdr" style="padding-bottom:22px"><div class="hello" style="padding-top:8px"><span class="avatar">MC</span><div>Marina Costa<br><small style="font-weight:400;opacity:.8;font-size:13px">marina@exemplo.com</small></div></div></div>
+  <div class="pad" style="padding-top:16px">
+  <button class="plan hl" style="width:100%;text-align:left" data-go="plans"><div style="display:flex;justify-content:space-between;align-items:center"><div><small style="opacity:.75">Seu plano</small><h3>${p.name}</h3></div>${I.logo('#41D92A',36)}</div>
+    <p style="margin:10px 0 0;font-size:13px;opacity:.85">${state.vehicles.length} de ${p.cars} veículos · renova em 05/12 · ${brl(p.price)}/mês</p></button>
+  <div class="list" style="margin-top:14px">
+    ${[['garage','Meus veículos',I.car],['history','Histórico de manutenções',I.wrench],['plans','Planos e assinatura',I.tag],['checkout','Formas de pagamento',I.card]].map(([g,t,ic])=>`<button class="row" data-go="${g}"><span style="color:var(--azul)">${ic}</span><span class="grow"><b>${t}</b></span>${I.chev}</button>`).join('')}
+    <button class="row" data-toast="Indique um amigo: em breve"><span style="color:var(--azul)">${I.users}</span><span class="grow"><b>Indique e ganhe 1 mês</b></span>${I.chev}</button>
+    <button class="row" data-go="login"><span style="color:var(--bad)">${I.back}</span><span class="grow"><b style="color:var(--bad)">Sair</b></span></button>
+  </div><div style="height:24px"></div></div>`},
+
+plans:()=>sub('Planos Carrook')+`<div class="pad">
+  <p style="margin:0 0 14px;color:var(--muted);line-height:1.5">O plano de saúde do seu carro. Escolha o nível de cobertura.</p>
+  ${PLANS.map(p=>`<div class="plan ${p.hl?'hl':''} ${state.plan===p.id&&!p.hl?'cur':''}">
+    ${p.hl?'<span class="recflag" style="position:absolute;top:-11px;right:16px">⚡ Popular</span>':''}
+    <h3>${p.name}</h3><div class="p"><small>a partir de </small>${brl(p.price)}<small>/mês</small></div>
+    <ul>${p.feats.map(f=>`<li>${f}</li>`).join('')}</ul>
+    <button class="btn ${state.plan===p.id?'l':'g'} big" data-act="plan" data-id="${p.id}" ${state.plan===p.id?'disabled':''}>${state.plan===p.id?'Plano atual':'Assinar '+p.name}</button></div>`).join('')}
+  <p class="note" style="margin:14px 0 24px">Valores e benefícios do pitch da Carrook. Coparticipação: a parte do custo do serviço coberto que você paga. O limite de veículos por plano ainda é provisório.</p></div>`,
+
+garage:()=>{const p=plan(),full=state.vehicles.length>=p.cars;
+  return sub('Meus veículos')+`<div class="pad">
+  <div class="list">${state.vehicles.map((v,i)=>`<button class="row" data-act="pickcar" data-i="${i}"><span style="color:${v.color}">${I.car}</span><span class="grow"><b>${v.model} ${v.year}</b><small>${v.plate} · ${km(curKm(v))}</small></span>${i===state.vIdx?'<span class="chip">Ativo</span>':I.chev}</button>`).join('')}</div>
+  <p style="font-size:13px;color:var(--muted);margin:12px 2px">${state.vehicles.length} de ${p.cars} veículos no plano ${p.name}.</p>
+  ${full?`<div class="note">Seu plano chegou ao limite de veículos. <button style="color:var(--azul);font-weight:700" data-go="plans">Ver planos maiores</button></div>`:`
+  <div class="list" style="padding:16px"><b>Adicionar veículo</b>
+    <label class="field" for="nvModel"><span>Modelo</span><input id="nvModel" placeholder="Ex.: Honda HR-V"></label>
+    <label class="field" for="nvPlate"><span>Placa</span><input id="nvPlate" placeholder="ABC-1D23"></label>
+    <label class="field" for="nvKm"><span>Quilometragem</span><input id="nvKm" inputmode="numeric" placeholder="Ex.: 32000"></label>
+    <button class="btn b big" style="margin-top:14px" data-act="addcar">${I.plus} Adicionar</button></div>`}
+  <div style="height:24px"></div></div>`},
+
+history:()=>sub('Histórico')+`<div class="pad"><div class="list">
+  ${[['05/05/2026','Troca de óleo + filtro','Mecânica Rio Maina','Fiat Argo',256],['10/04/2026','Revisão 10.000 km','Auto Center Próspera','Jeep Renegade',920.4],['15/08/2025','Alinhamento e balanceamento','Garagem Pinheirinho','Fiat Argo',153]].map(([d,s,o,c,v])=>`<div class="row"><span style="color:var(--folha)">${I.wrench}</span><span class="grow"><b>${s}</b><small>${d} · ${o} · ${c}</small></span><b style="font-variant-numeric:tabular-nums">${brl(v)}</b></div>`).join('')}
+  </div><p class="note" style="margin-top:14px">Economia com a Carrook em 2026: <b style="color:var(--folha)">${brl(312.6)}</b></p></div>`,
+};
+
+/* ================= Render app ================= */
+function render(){
+  const view=document.getElementById('view'), s=state.screen;
+  view.innerHTML=V[s]();
+  const tabbed=['home','alerts','services','menu','vehicle','shop','checkout','plans','garage','history'].includes(s);
+  const tb=document.getElementById('tabbar'); tb.hidden=!tabbed || s==='login';
+  const activeTab={vehicle:'home',shop:'services',checkout:'services',plans:'menu',garage:'menu',history:'menu'}[s]||s;
+  tb.innerHTML=TABS.map(([k,t,ic])=>`<button data-tab="${k}" aria-current="${activeTab===k}">${ic}${t}</button>`).join('');
+  const blue=['login','success'].includes(s), violet=['home','menu'].includes(s);
+  const sb=document.getElementById('statusBar'); sb.style.background=blue?'var(--azul)':violet?'var(--violeta)':'var(--gelo)'; sb.style.color=(blue||violet)?'#fff':'var(--ink)';
+  document.getElementById('sideList').innerHTML=SCREENS.map(([k,t])=>`<button data-jump="${k}" aria-current="${s===k}">${t}</button>`).join('');
+  renderToast();
+}
+function renderToast(){document.getElementById('toastHost').innerHTML=state.toast?`<div class="toast" role="status">${I.logo('#41D92A',18)}${state.toast}</div>`:''}
+
+document.getElementById('appMode').addEventListener('click',e=>{
+  const t=e.target.closest('button'); if(!t||t.disabled)return;
+  const d=t.dataset;
+  if(d.jump){ if((d.jump==='shop'||d.jump==='checkout'||d.jump==='success')&&!state.hour){state.shopId=recommended().id;state.hour='09:30';} state.stack=[]; go(d.jump,false); return;}
+  if(d.tab){state.stack=[];go(d.tab,false);return}
+  if(d.go){go(d.go);return}
+  if(d.toast){toast(d.toast);return}
+  const a=d.act;
+  if(a==='back')back();
+  if(a==='nextcar'){state.vIdx=(state.vIdx+1)%state.vehicles.length;render()}
+  if(a==='book'){state.service=d.svc;go('services')}
+  if(a==='svc'){state.service=d.svc;render()}
+  if(a==='filter'){state.filter=d.f;render()}
+  if(a==='shop'){state.shopId=+d.id;state.hour=null;go('shop')}
+  if(a==='day'){state.day=+d.i;state.hour=null;render()}
+  if(a==='hour'){state.hour=d.h;render()}
+  if(a==='pay'){state.pay=d.p;render()}
+  if(a==='finish'){state.stack=[];state.hour=null;go('home',false);toast('Agendamento salvo no seu histórico')}
+  if(a==='plan'){const p=PLANS.find(x=>x.id===d.id);if(state.vehicles.length>p.cars){toast(`O ${p.name} cobre ${p.cars} veículo. Remova um antes de mudar.`);return}state.plan=d.id;render();toast(`Plano ${p.name} ativado`)}
+  if(a==='autokm'){state.autoKm=!state.autoKm;render()}
+  if(a==='savekm'){const v=state.vehicles[state.vIdx];const n=parseInt(document.getElementById('kmInput').value.replace(/\D/g,''));
+    if(!n||n<v.items.oleo.last){toast('Digite a quilometragem que aparece no painel');return}
+    v.km=n;v.kmDate='2026-11-17';render();toast('Quilometragem atualizada')}
+  if(a==='pickcar'){state.vIdx=+d.i;go('home')}
+  if(a==='addcar'){const m=document.getElementById('nvModel').value.trim(),p=document.getElementById('nvPlate').value.trim().toUpperCase(),k=parseInt((document.getElementById('nvKm').value||'').replace(/\D/g,''));
+    if(!m||!p||!k){toast('Preencha modelo, placa e quilometragem');return}
+    state.vehicles.push({id:Date.now(),model:m,year:2026,plate:p,color:'#3A43A4',km:k,kmDate:'2026-11-17',avgDay:30,items:Object.fromEntries(Object.keys(ITEMS).map(x=>[x,{last:k,lastDate:'2026-11-17'}]))});
+    render();toast(`${m} adicionado`)}
+});
+document.getElementById('appMode').addEventListener('change',e=>{if(e.target.id==='svcSel'){state.service=e.target.value;render()}});
+
+/* ================= Admin ================= */
+const APAGES=[['overview','Visão geral',I.dash],['bookings','Agendamentos',I.cal],['shops','Oficinas',I.shop],['plans','Planos',I.tag]];
+const BOOKINGS=[
+  ['#4821','Marina Costa','Jeep Renegade','Revisão completa','Auto Center Próspera','18/11 09:30',920.4,'Confirmado'],
+  ['#4820','Rafael Nunes','VW T-Cross','Troca de óleo + filtro','Oficina Centro Sul','18/11 11:00',281.6,'Confirmado'],
+  ['#4819','Júlia Mendes','Hyundai HB20','Pastilhas de freio','Mecânica Rio Maina','17/11 15:00',377.2,'Em serviço'],
+  ['#4818','Carlos Silva','Toyota Corolla','Alinhamento e balanceamento','Garagem Pinheirinho','17/11 08:00',153,'Concluído'],
+  ['#4817','Ana Beatriz','Fiat Argo','Revisão completa','Auto Center Próspera','16/11 13:30',920.4,'Concluído'],
+  ['#4816','Pedro Alves','Renault Kwid','Troca de óleo + filtro','Mecânica Rio Maina','16/11 16:30',262.4,'Cancelado'],
+];
+const stChip=s=>`<span class="chip ${s==='Confirmado'?'blue':s==='Em serviço'?'warn':s==='Cancelado'?'bad':''}">${s}</span>`;
+const AP={
+overview:()=>`<h1>Visão geral <span class="ex">dados de exemplo</span></h1><p class="sub">Novembro de 2026 · até hoje</p>
+  <div class="kpis">
+   <div class="kpi"><small>Assinantes ativos</small><b>1.284</b><span>+86 no mês</span></div>
+   <div class="kpi"><small>Receita recorrente</small><b>${brl(25600+72480+33600).replace(',00','')}</b><span>+7,2% vs. outubro</span></div>
+   <div class="kpi"><small>Agendamentos</small><b>412</b><span>+38 na semana</span></div>
+   <div class="kpi"><small>Oficinas parceiras</small><b>${SHOPS.length}</b><span>2 em credenciamento</span></div></div>
+  <div class="grid2">
+   <div class="panel"><h2>Assinantes por plano</h2><div class="hbars">${[['Clube',512],['Start',604],['Premium',168]].map(([n,v])=>`<div><span>${n}</span><span class="t"><i style="width:${v/604*100}%"></i></span><b>${v}</b></div>`).join('')}</div></div>
+   <div class="panel"><h2>Serviços mais agendados</h2><div class="hbars">${[['Óleo',168],['Revisão',121],['Alinham.',79],['Freios',44]].map(([n,v])=>`<div><span>${n}</span><span class="t"><i style="width:${v/168*100}%;background:var(--verde)"></i></span><b>${v}</b></div>`).join('')}</div></div></div>
+  <div class="panel"><h2>Últimos agendamentos</h2><div class="tbl">${bookingTable(BOOKINGS.slice(0,4))}</div></div>`,
+bookings:()=>`<h1>Agendamentos <span class="ex">dados de exemplo</span></h1><p class="sub">Todos os agendamentos feitos pelo app</p><div class="panel"><div class="tbl">${bookingTable(BOOKINGS)}</div></div>`,
+shops:()=>`<h1>Oficinas parceiras</h1><p class="sub">Altere o desconto em peças (vale para o Clube): a ordem "Maior desconto" e a indicação Carrook no app mudam na hora.</p>
+  <div class="panel"><div class="tbl"><table><thead><tr><th>Oficina</th><th>Endereço</th><th>Avaliação</th><th>Distância*</th><th>Desconto</th><th></th></tr></thead><tbody>
+  ${SHOPS.map(s=>`<tr><td><b>${s.name}</b></td><td>${s.addr}</td><td>${s.rate.toFixed(1)} (${s.reviews})</td><td>${s.dist.toFixed(1).replace('.',',')} km</td>
+   <td><input class="inp-sm" id="disc${s.id}" type="number" min="0" max="60" value="${s.disc}" data-shop="${s.id}" aria-label="Desconto ${s.name}"> %</td><td>${s.id===recommended().id?'<span class="chip">Indicada</span>':''}</td></tr>`).join('')}
+  </tbody></table></div><p style="font-size:12px;color:var(--muted);margin:10px 0 0">*Distância do usuário de exemplo.</p></div>`,
+plans:()=>`<h1>Planos</h1><p class="sub">Valores do pitch. Editar aqui atualiza a tela de planos do app.</p>
+  <div class="panel"><div class="tbl"><table><thead><tr><th>Plano</th><th>Mensalidade (R$)</th><th>Limite de veículos</th><th>Coparticipação</th><th>Benefícios</th></tr></thead><tbody>
+  ${PLANS.map(p=>`<tr><td><b>${p.name}</b></td><td><input class="inp-sm" style="width:90px" id="pp${p.id}" type="number" step="0.1" value="${p.price}" data-plan="${p.id}" data-k="price" aria-label="Preço ${p.name}"></td>
+   <td><input class="inp-sm" id="pc${p.id}" type="number" min="1" max="10" value="${p.cars}" data-plan="${p.id}" data-k="cars" aria-label="Veículos ${p.name}"></td><td>${p.copay?p.copay*100+'%':'Sem cobertura'}</td><td style="white-space:normal;min-width:240px">${p.feats.slice(0,-1).join(' · ')}</td></tr>`).join('')}
+  </tbody></table></div></div>`,
+};
+function bookingTable(rows){return `<table><thead><tr><th>Pedido</th><th>Cliente</th><th>Veículo</th><th>Serviço</th><th>Oficina</th><th>Data</th><th>Valor</th><th>Status</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td>${brl(r[6])}</td><td>${stChip(r[7])}</td></tr>`).join('')}</tbody></table>`}
+function renderAdmin(){
+  document.getElementById('adminMode').innerHTML=`<div class="admin"><nav class="anav" aria-label="Admin">${APAGES.map(([k,t,ic])=>`<button data-ap="${k}" aria-current="${state.adminPage===k}">${ic}${t}</button>`).join('')}</nav><section class="amain">${AP[state.adminPage]()}</section></div>`;
+}
+document.getElementById('adminMode').addEventListener('click',e=>{const b=e.target.closest('[data-ap]');if(b){state.adminPage=b.dataset.ap;renderAdmin()}});
+document.getElementById('adminMode').addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.shop){const s=SHOPS.find(x=>x.id==t.dataset.shop);s.disc=Math.max(0,Math.min(60,+t.value||0));renderAdmin();render()}
+  if(t.dataset.plan){const p=PLANS.find(x=>x.id===t.dataset.plan);p[t.dataset.k]=t.dataset.k==='cars'?Math.max(1,parseInt(t.value)||1):Math.max(0,+t.value||0);render()}
+});
+
+/* ================= Alternar visão ================= */
+function setMode(admin){
+  document.getElementById('appMode').hidden=admin; document.getElementById('adminMode').hidden=!admin;
+  document.getElementById('modeApp').setAttribute('aria-pressed',!admin); document.getElementById('modeAdmin').setAttribute('aria-pressed',admin);
+  if(admin)renderAdmin(); else render();
+}
+document.getElementById('modeApp').onclick=()=>setMode(false);
+document.getElementById('modeAdmin').onclick=()=>setMode(true);
+document.getElementById('topLogo').innerHTML=I.logo('#41D92A',26);
+render();
+</script>
