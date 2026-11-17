@@ -3,15 +3,17 @@
 @tailwind utilities;
 
 @layer base {
+  :root { --ice: 249 253 255; --mist: 238 241 250; --line: 223 227 241; --surface: 255 255 255; --fg: 21 26 59; --muted: 96 103 138; --ok: 35 115 26; color-scheme: light; }
+  .dark { --ice: 13 16 36; --mist: 13 16 36; --line: 44 50 90; --surface: 24 28 56; --fg: 238 241 250; --muted: 160 167 204; --ok: 92 214 70; color-scheme: dark; }
   html { -webkit-tap-highlight-color: transparent; }
-  body { @apply bg-mist font-sans text-slate antialiased; }
+  body { @apply bg-mist font-sans text-fg antialiased; }
   :focus-visible { outline: 3px solid #41D92A; outline-offset: 2px; }
   input, select, textarea { font: inherit; }
 }
 @layer components {
-  .field { @apply h-12 w-full rounded-2xl border-[1.5px] border-line bg-white px-4 text-base text-slate outline-none transition placeholder:text-muted/60 focus:border-royal; }
+  .field { @apply h-12 w-full rounded-2xl border-[1.5px] border-line bg-surface px-4 text-base text-fg outline-none transition placeholder:text-muted/60 focus:border-royal; }
   .label { @apply mb-1.5 block text-[13px] font-semibold text-muted; }
-  .card { @apply rounded-3xl bg-white; }
+  .card { @apply rounded-3xl bg-surface; }
   .no-scrollbar { scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .pb-safe { padding-bottom: max(10px, env(safe-area-inset-bottom)); }

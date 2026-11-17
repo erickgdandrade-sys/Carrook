@@ -58,7 +58,7 @@ export function Home() {
 
           {/* Próximo agendamento */}
           {next ? <NextBooking id={next.id} /> : (
-            <Link to="/oficinas" className="flex items-center gap-4 rounded-3xl border-2 border-dashed border-line bg-white/60 p-4">
+            <Link to="/oficinas" className="flex items-center gap-4 rounded-3xl border-2 border-dashed border-line bg-surface/60 p-4">
               <span className="grid h-12 w-12 place-items-center rounded-2xl bg-mist text-royal"><CalendarBlank size={24} /></span>
               <span className="flex-1"><b className="block">Nada agendado</b><span className="text-sm text-muted">Encontre uma oficina parceira</span></span><ArrowRight size={18} className="text-muted" />
             </Link>
@@ -98,7 +98,7 @@ export function Home() {
           <ArrowRight size={22} weight="bold" />
         </Link>
         {/* Plano */}
-        <Link to="/plano" className="relative flex items-center gap-4 overflow-hidden rounded-3xl bg-white p-5">
+        <Link to="/plano" className="relative flex items-center gap-4 overflow-hidden rounded-3xl bg-surface p-5">
           <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-royal text-white"><LogoMark size={30} /></span>
           <span className="flex-1"><span className="text-[13px] font-semibold uppercase tracking-[.1em] text-muted">Seu plano</span><b className="block text-xl leading-tight">{plan.name}</b><span className="text-sm text-muted">{s.yearlyUsed.revisao ? 'Revisão anual já usada' : 'Revisão anual de 80 itens disponível'}</span></span>
           <ArrowRight size={22} weight="bold" className="text-muted" />
@@ -109,16 +109,16 @@ export function Home() {
       <Section title="Descubra mais" className="mt-8">
         <div className="no-scrollbar flex snap-x gap-3 overflow-x-auto px-5 pb-2 lg:grid lg:grid-cols-3 lg:px-0">
           {POSTS.map(p => (
-            <article key={p.id} className="relative h-48 w-[260px] shrink-0 snap-start overflow-hidden rounded-3xl lg:w-auto">
+            <Link to={`/blog/${p.id}`} key={p.id} className="relative h-48 w-[260px] shrink-0 snap-start overflow-hidden rounded-3xl lg:w-auto">
               <img src={p.photo} alt="" className="absolute inset-0 h-full w-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate/90 via-slate/30 to-transparent" />
               <div className="absolute inset-x-4 bottom-4 text-white"><span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-semibold backdrop-blur">{p.tag} · {p.minutes} min</span><h3 className="mt-2 text-[17px] font-semibold leading-snug">{p.title}</h3></div>
-            </article>
+            </Link>
           ))}
         </div>
-        <div className="mx-5 mt-3 flex items-center justify-between rounded-2xl bg-navy px-5 py-4 text-white lg:mx-0">
+        <Link to="/blog/oleo" className="mx-5 mt-3 flex items-center justify-between rounded-2xl bg-navy px-5 py-4 text-white lg:mx-0">
           <b className="text-[17px]">Acesse nosso blog</b><ArrowRight size={20} weight="bold" />
-        </div>
+        </Link>
       </Section>
     </div>
   )
@@ -141,10 +141,10 @@ function VehicleCarousel({ vehicles, index, onIndex, autoKm }: { vehicles: Vehic
           const km = currentKm(v, autoKm)
           return (
             <div key={v.id} className="w-full shrink-0 snap-center px-5 lg:px-0">
-              <article className="relative rounded-[28px] bg-white p-3 shadow-float lg:shadow-none">
-                <button onClick={() => setMenu(menu === v.id ? null : v.id)} aria-label="Opções do veículo" className="absolute right-5 top-5 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-slate backdrop-blur"><DotsThreeVertical size={22} weight="bold" /></button>
+              <article className="relative rounded-[28px] bg-surface p-3 shadow-float lg:shadow-none">
+                <button onClick={() => setMenu(menu === v.id ? null : v.id)} aria-label="Opções do veículo" className="absolute right-5 top-5 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-[#151A3B] backdrop-blur"><DotsThreeVertical size={22} weight="bold" /></button>
                 {menu === v.id && (
-                  <div className="absolute right-5 top-16 z-20 w-48 overflow-hidden rounded-2xl bg-white text-sm shadow-float">
+                  <div className="absolute right-5 top-16 z-20 w-48 overflow-hidden rounded-2xl bg-surface text-sm shadow-float">
                     <button className="block w-full px-4 py-3 text-left hover:bg-mist" onClick={() => nav(`/veiculos/${v.id}`)}>Atualizar quilometragem</button>
                     <button className="block w-full px-4 py-3 text-left hover:bg-mist" onClick={() => nav('/veiculos')}>Gerenciar veículos</button>
                   </div>)}
@@ -167,7 +167,7 @@ function VehicleCarousel({ vehicles, index, onIndex, autoKm }: { vehicles: Vehic
       </div>
       <div className="mt-3 flex items-center justify-center gap-1.5">
         {vehicles.map((v, i) => <button key={v.id} aria-label={`Ver ${v.model}`} onClick={() => { ref.current?.scrollTo({ left: i * (ref.current?.clientWidth ?? 0), behavior: 'smooth' }); onIndex(i) }} className={`h-1.5 rounded-full transition-all ${i === index ? 'w-12 bg-lime' : 'w-1.5 bg-line'}`} />)}
-        <Link to="/veiculos/novo" aria-label="Adicionar veículo" className="ml-1 grid h-6 w-6 place-items-center rounded-full bg-white text-muted"><Plus size={12} weight="bold" /></Link>
+        <Link to="/veiculos/novo" aria-label="Adicionar veículo" className="ml-1 grid h-6 w-6 place-items-center rounded-full bg-surface text-muted"><Plus size={12} weight="bold" /></Link>
       </div>
     </div>
   )
@@ -180,9 +180,9 @@ function ServiceCard({ k }: { k: ServiceKey }) {
   const Ic = SERVICE_ICON[k]
   const best = s.shops.filter(x => x.services.includes(k)).map(x => quote(s.plan, x, k, s.yearlyUsed)).sort((a, b) => a.total - b.total)[0]
   return (
-    <div className="w-[230px] shrink-0 snap-start rounded-3xl bg-white p-4 lg:w-auto">
+    <div className="w-[230px] shrink-0 snap-start rounded-3xl bg-surface p-4 lg:w-auto">
       <div className="flex items-center gap-3">
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-mist text-slate"><Ic size={24} /></span>
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-mist text-fg"><Ic size={24} /></span>
         <div className="min-w-0"><b className="block truncate text-[16px] font-semibold">{svc.short}</b><span className="text-[13px] text-muted">{best.total === 0 ? 'No seu plano' : 'A partir de:'}</span>
           <p className="text-[19px] font-bold tabular-nums leading-tight">{best.total === 0 ? 'Incluído' : brl(best.total)}</p></div>
       </div>
@@ -199,7 +199,7 @@ function NextBooking({ id }: { id: string }) {
   const shop = useStore(s => s.shops.find(x => x.id === b.shopId))!
   const d = new Date(b.date)
   return (
-    <Link to={`/agendamentos/${b.id}`} className="flex items-stretch overflow-hidden rounded-3xl bg-white">
+    <Link to={`/agendamentos/${b.id}`} className="flex items-stretch overflow-hidden rounded-3xl bg-surface">
       <div className="flex w-20 shrink-0 flex-col items-center justify-center bg-royal text-white">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-white/70">{fmtDate(b.date, { month: 'short' })}</span>
         <span className="text-3xl font-extrabold leading-none">{d.getDate()}</span>

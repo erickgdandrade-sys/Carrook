@@ -37,11 +37,11 @@ export const BrandPattern = ({ className = '', color = '#fff', opacity = 0.1 }: 
 export const Plate = ({ plate, size = 'md' }: { plate: string; size?: 'sm' | 'md' | 'lg' }) => {
   const s = { sm: 'w-[78px] text-[13px]', md: 'w-[96px] text-[16px]', lg: 'w-[132px] text-[22px]' }[size]
   return (
-    <span className={`inline-flex flex-col overflow-hidden rounded-[5px] border border-slate/25 bg-white leading-none shadow-sm ${s}`}>
+    <span className={`inline-flex flex-col overflow-hidden rounded-[5px] border border-[#151A3B]/25 bg-white leading-none shadow-sm ${s}`}>
       <span className="flex items-center justify-between bg-royal px-1.5 py-[2px] text-[6.5px] font-semibold tracking-[.18em] text-white">
         <span>BRASIL</span><span className="h-[5px] w-[8px] rounded-[1px] bg-lime" />
       </span>
-      <span className="py-[3px] text-center font-bold tracking-[.08em] text-slate" style={{ fontVariantNumeric: 'tabular-nums' }}>{plate.toUpperCase()}</span>
+      <span className="py-[3px] text-center font-bold tracking-[.08em] text-[#151A3B]" style={{ fontVariantNumeric: 'tabular-nums' }}>{plate.toUpperCase()}</span>
     </span>
   )
 }
@@ -85,11 +85,11 @@ export function Btn({ kind = 'lime', size = 'md', className = '', children, ...r
   const k: Record<BtnKind, string> = {
     lime: 'bg-lime text-ink hover:brightness-95',
     royal: 'bg-royal text-white hover:bg-[#1a4bcb]',
-    ghost: 'bg-mist text-slate hover:bg-line',
+    ghost: 'bg-mist text-fg hover:bg-line',
     outline: 'border-[1.5px] border-white/80 text-white hover:bg-white/10',
     dark: 'bg-slate text-white hover:bg-black',
-    white: 'bg-white text-navy hover:bg-ice',
-    line: 'border-[1.5px] border-line bg-white text-slate hover:border-royal',
+    white: 'bg-white text-navy hover:bg-[#F9FDFF]',
+    line: 'border-[1.5px] border-line bg-surface text-fg hover:border-royal',
   }
   const s = { sm: 'h-8 px-3.5 text-[13px]', md: 'h-11 px-5 text-[15px]', lg: 'h-14 px-6 text-base' }[size]
   return <button className={`inline-flex items-center justify-center gap-2 rounded-full font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${k[kind]} ${s} ${className}`} {...rest}>{children}</button>
@@ -106,7 +106,7 @@ export const Seal = ({ size = 16 }: { size?: number }) => <SealCheck size={size}
 export const ITEM_ICON: Record<ItemKey, Icon> = { oleo: Drop, filtroAr: Wind, pneus: SteeringWheel, freios: Disc, arrefecimento: Thermometer, bateria: BatteryCharging, correia: Gear }
 export const SERVICE_ICON: Record<ServiceKey, Icon> = { revisao: Wrench, oleo: Drop, freios: Disc, alinhamento: SteeringWheel, bateria: BatteryCharging, arrefecimento: Thermometer, correia: Gear, diagnostico: Pulse }
 export const LEVEL: Record<Level, { label: string; text: string; bg: string; bar: string }> = {
-  ok: { label: 'Em dia', text: 'text-leaf', bg: 'bg-lime/15', bar: 'bg-lime' },
+  ok: { label: 'Em dia', text: 'text-ok', bg: 'bg-lime/15', bar: 'bg-lime' },
   soon: { label: 'Em breve', text: 'text-[#9A6200]', bg: 'bg-amber/15', bar: 'bg-amber' },
   late: { label: 'Atrasado', text: 'text-danger', bg: 'bg-danger/10', bar: 'bg-danger' },
 }
@@ -117,12 +117,12 @@ export function PageHead({ title, sub, back = true, right }: { title: string; su
   return (
     <header className="flex items-center gap-3 px-5 pb-4 pt-3 lg:px-0 lg:pb-6 lg:pt-0">
       {back && (
-        <button onClick={() => nav(-1)} aria-label="Voltar" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-slate shadow-soft lg:hidden">
+        <button onClick={() => nav(-1)} aria-label="Voltar" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-surface text-fg shadow-soft lg:hidden">
           <CaretLeft size={20} weight="bold" />
         </button>
       )}
       <div className="min-w-0 flex-1">
-        <h1 className="text-[22px] font-bold leading-tight text-slate lg:text-[34px] lg:font-extrabold">{title}</h1>
+        <h1 className="text-[22px] font-bold leading-tight text-fg lg:text-[34px] lg:font-extrabold">{title}</h1>
         {sub && <p className="mt-0.5 text-sm text-muted lg:text-base">{sub}</p>}
       </div>
       {right}
@@ -133,7 +133,7 @@ export function PageHead({ title, sub, back = true, right }: { title: string; su
 export const Section = ({ title, action, children, className = '' }: { title: string; action?: ReactNode; children: ReactNode; className?: string }) => (
   <section className={className}>
     <div className="mb-3 flex items-baseline justify-between">
-      <h2 className="text-[15px] font-semibold text-slate lg:text-lg">{title}</h2>
+      <h2 className="text-[15px] font-semibold text-fg lg:text-lg">{title}</h2>
       {action}
     </div>
     {children}

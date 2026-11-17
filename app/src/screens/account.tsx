@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Bell, CalendarCheck, Tag, Gauge as GaugeIcon, GasPump, Check, Car, Crown, Gift, User, SignOut, ChartLineUp, CaretRight, Wrench, ShieldCheck, Percent, QrCode, ArrowCounterClockwise, type Icon } from '@phosphor-icons/react'
-import { FUEL, PLANS, type PlanId } from '../data'
-import { brl, useStore, type Notice } from '../store'
+import { Bell, CalendarCheck, Tag, Gauge as GaugeIcon, GasPump, Check, Car, Crown, Gift, User, SignOut, ChartLineUp, CaretRight, Wrench, ShieldCheck, Percent, QrCode, ArrowCounterClockwise, Handshake, Storefront, FileText, Globe, Moon, Sun, Desktop, type Icon } from '@phosphor-icons/react'
+import { CARENCIA_DIAS, FUEL, NOT_COVERED, PLANS, type PlanId } from '../data'
+import { Coverage, RolePicker } from './extra'
+import { brl, carenciaLeft, uid, useStore, type Notice, type Prefs, type Theme } from '../store'
 import { BrandPattern, Btn, LogoMark, PageHead, fmtDate } from '../ui'
 
 const N_ICON: Record<Notice['kind'], Icon> = { alerta: Wrench, agenda: CalendarCheck, promo: Tag, km: GaugeIcon }
@@ -17,13 +18,13 @@ export function Notices() {
         {s.notices.map(n => {
           const Ic = N_ICON[n.kind]
           return (
-            <button key={n.id} onClick={() => { s.set({ notices: s.notices.map(x => x.id === n.id ? { ...x, read: true } : x) }); if (n.to) nav(n.to) }} className={`flex gap-3 rounded-3xl p-4 text-left transition ${n.read ? 'bg-white/60' : 'bg-white shadow-soft'}`}>
+            <button key={n.id} onClick={() => { s.set({ notices: s.notices.map(x => x.id === n.id ? { ...x, read: true } : x) }); if (n.to) nav(n.to) }} className={`flex gap-3 rounded-3xl p-4 text-left transition ${n.read ? 'bg-surface/60' : 'bg-surface shadow-soft'}`}>
               <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${n.kind === 'promo' ? 'bg-lime text-ink' : n.kind === 'agenda' ? 'bg-royal text-white' : 'bg-mist text-royal'}`}><Ic size={22} weight="fill" /></span>
               <span className="min-w-0 flex-1"><span className="flex items-start justify-between gap-2"><b className="text-[15px]">{n.title}</b><span className="shrink-0 text-xs text-muted">{fmtDate(n.date)}</span></span><span className="text-sm text-muted">{n.body}</span></span>
               {!n.read && <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-lime" />}
             </button>)
         })}
-        {!s.notices.length && <div className="rounded-3xl bg-white p-8 text-center text-muted"><Bell size={32} className="mx-auto mb-2" />Sem notificações por enquanto.</div>}
+        {!s.notices.length && <div className="rounded-3xl bg-surface p-8 text-center text-muted"><Bell size={32} className="mx-auto mb-2" />Sem notificações por enquanto.</div>}
       </div>
     </div>
   )
@@ -57,7 +58,7 @@ export function Benefits() {
           [Percent, 'Até 20% em peças', 'Desconto aplicado direto na oficina parceira.', '/oficinas'],
           [Gift, '+15 vantagens de parceiros', 'Lavagem, estacionamento, seguros e mais. Em breve no app.', undefined],
         ] as [Icon, string, string, string | undefined][]).map(([Ic, t, d, to]) => (
-          <div key={t} className="flex gap-4 rounded-3xl bg-white p-5">
+          <div key={t} className="flex gap-4 rounded-3xl bg-surface p-5">
             <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-mist text-royal"><Ic size={24} weight="duotone" /></span>
             <div className="flex-1"><b className="block text-[17px]">{t}</b><p className="text-sm text-muted">{d}</p>{to && <Link to={to} className="mt-2 inline-block text-sm font-semibold text-royal">Usar agora</Link>}</div>
           </div>))}
@@ -72,7 +73,8 @@ export function PlanPage() {
   const cur = PLANS.find(p => p.id === s.plan)!
   const change = (id: PlanId) => {
     if (s.vehicles.length > s.planLimits[id]) { s.say(`Esse plano cobre ${s.planLimits[id]} veículo(s). Remova um antes.`); return }
-    s.set({ plan: id }); setPick(undefined); s.say(`Plano alterado para ${PLANS.find(p => p.id === id)!.name}`)
+    const up = (PLANS.find(p => p.id === id)!.copay ?? 1) < (PLANS.find(p => p.id === s.plan)!.copay ?? 1)
+    s.set({ plan: id, ...(up ? { planSince: new Date().toISOString() } : {}) }); setPick(undefined); s.say(`Plano alterado para ${PLANS.find(p => p.id === id)!.name}`)
   }
   return (
     <div>
@@ -80,7 +82,8 @@ export function PlanPage() {
       <div className="relative mx-5 overflow-hidden rounded-3xl bg-royal p-6 text-white lg:mx-0 lg:p-8">
         <BrandPattern opacity={0.08} />
         <div className="relative flex flex-wrap items-end justify-between gap-4">
-          <div><p className="text-sm text-white/70">Plano atual</p><h2 className="text-[34px] font-extrabold leading-none">{cur.name}</h2><p className="mt-2 text-white/80">{brl(s.planPrices[cur.id])}/mês · renova dia 5 · {s.vehicles.length} de {s.planLimits[cur.id]} veículos</p></div>
+          <div><p className="text-sm text-white/70">Plano atual</p><h2 className="text-[34px] font-extrabold leading-none">{cur.name}</h2><p className="mt-2 text-white/80">{brl(s.planPrices[cur.id])}/mês · renova dia 5 · {s.vehicles.length} de {s.planLimits[cur.id]} veículos</p>
+            {carenciaLeft(cur.id, s.planSince) > 0 && <p className="mt-3 inline-block rounded-full bg-white/15 px-3 py-1 text-sm font-semibold">Carência: cobertura libera em {carenciaLeft(cur.id, s.planSince)} dias</p>}</div>
           <LogoMark size={64} color="#41D92A" />
         </div>
       </div>
@@ -89,7 +92,7 @@ export function PlanPage() {
         {PLANS.map(p => {
           const mine = p.id === s.plan, dark = p.popular
           return (
-            <article key={p.id} className={`relative flex w-[280px] shrink-0 snap-center flex-col rounded-3xl p-6 lg:w-auto ${dark ? 'bg-navy text-white' : 'bg-white'} ${mine ? 'ring-[3px] ring-lime' : ''}`}>
+            <article key={p.id} className={`relative flex w-[280px] shrink-0 snap-center flex-col rounded-3xl p-6 lg:w-auto ${dark ? 'bg-navy text-white' : 'bg-surface'} ${mine ? 'ring-[3px] ring-lime' : ''}`}>
               {p.popular && <span className="absolute -top-3 left-6 rounded-full bg-lime px-3 py-1 text-xs font-bold text-ink">⚡ Popular</span>}
               <h3 className="text-xl font-bold">{p.name}</h3>
               <p className={`mt-1 text-sm ${dark ? 'text-white/70' : 'text-muted'}`}>{p.tagline}</p>
@@ -103,7 +106,13 @@ export function PlanPage() {
             </article>)
         })}
       </div>
-      <p className="mx-5 mt-4 text-sm leading-relaxed text-muted lg:mx-0">Coparticipação é a parte do custo que você paga nos serviços cobertos: no Start, metade; no Premium, 20%. Revisão anual e troca de óleo estão incluídas em todos os planos.</p>
+      <p className="mx-5 mt-4 text-sm leading-relaxed text-muted lg:mx-0">Coparticipação é a parte do custo que você paga nos serviços cobertos: no Start, metade; no Premium, 20%. Revisão anual e troca de óleo estão incluídas em todos os planos. Trocar para um plano com mais cobertura reinicia a carência.</p>
+      <h2 className="mt-8 px-5 text-lg font-semibold lg:px-0">O que os 80 itens cobrem</h2>
+      <div className="mx-5 mt-3 lg:mx-0"><Coverage /></div>
+      <div className="mx-5 mt-4 grid gap-4 lg:mx-0 lg:grid-cols-2">
+        <section className="rounded-3xl bg-surface p-5"><b>Carência</b><ul className="mt-2 grid gap-1.5 text-sm">{PLANS.map(p => <li key={p.id} className="flex justify-between"><span>{p.name}</span><b>{CARENCIA_DIAS[p.id] ? `${CARENCIA_DIAS[p.id]} dias` : 'Sem carência'}</b></li>)}</ul><p className="mt-2 text-xs text-muted">Revisão anual, troca de óleo e descontos valem desde o primeiro mês.</p></section>
+        <section className="rounded-3xl bg-surface p-5"><b>Não está coberto</b><ul className="mt-2 grid gap-1.5 text-sm text-muted">{NOT_COVERED.map(x => <li key={x}>• {x}</li>)}</ul></section>
+      </div>
     </div>
   )
 }
@@ -112,14 +121,16 @@ export function Menu() {
   const s = useStore()
   const nav = useNavigate()
   const plan = PLANS.find(p => p.id === s.plan)!
-  const ITEMS: [string, string, Icon][] = [['/veiculos', 'Meus veículos', Car], ['/agendamentos', 'Agendamentos', CalendarCheck], ['/beneficios', 'Benefícios', Gift], ['/plano', 'Meu plano', Crown], ['/perfil', 'Perfil e pagamento', User], ['/admin', 'Painel admin (equipe)', ChartLineUp]]
+  const ITEMS: [string, string, Icon][] = [['/veiculos', 'Meus veículos', Car], ['/agendamentos', 'Agendamentos', CalendarCheck], ['/beneficios', 'Benefícios', Gift], ['/plano', 'Meu plano', Crown], ['/indique', 'Indique e ganhe', Handshake], ['/perfil', 'Perfil, tema e notificações', User],
+    ...(s.role === 'admin' ? [['/admin', 'Painel admin', ChartLineUp] as [string, string, Icon]] : []), ...(s.role === 'oficina' ? [['/oficina', 'Portal da oficina', Storefront] as [string, string, Icon]] : []),
+    ['/site', 'Site da Carrook', Globe], ['/termos', 'Termos e privacidade', FileText]]
   return (
     <div>
       <div className="bg-violet px-5 pb-6 pt-[max(20px,env(safe-area-inset-top))] text-white">
         <div className="flex items-center gap-3"><span className="grid h-14 w-14 place-items-center rounded-full border-2 border-white text-lg font-bold">{s.user.name.split(' ').map(w => w[0]).slice(0, 2).join('')}</span>
           <div><b className="block text-xl">{s.user.name}</b><span className="text-sm text-white/75">{plan.name}</span></div></div>
       </div>
-      <div className="mx-5 -mt-0 mt-4 overflow-hidden rounded-3xl bg-white">
+      <div className="mx-5 -mt-0 mt-4 overflow-hidden rounded-3xl bg-surface">
         {ITEMS.map(([to, t, Ic]) => <Link key={to} to={to} className="flex items-center gap-4 border-b border-line px-4 py-4 last:border-0"><Ic size={22} className="text-royal" /><span className="flex-1 font-medium">{t}</span><CaretRight size={18} className="text-muted" /></Link>)}
       </div>
       <button onClick={() => { s.set({ signedIn: false }); nav('/bem-vindo') }} className="mx-5 mt-4 flex items-center gap-2 font-semibold text-danger"><SignOut size={20} />Sair</button>
@@ -141,12 +152,29 @@ export function Profile() {
         <label><span className="label">WhatsApp</span><input id="pf-phone" className="field" value={u.phone} onChange={e => setU({ ...u, phone: e.target.value })} /></label>
         <Btn kind="royal" type="submit">Salvar alterações</Btn>
       </form>
+      <h2 className="mt-8 px-5 text-lg font-semibold lg:px-0">Aparência</h2>
+      <div className="mx-5 mt-3 grid grid-cols-3 gap-2 rounded-2xl bg-surface p-1.5 lg:mx-0">
+        {([['system', 'Automático', Desktop], ['light', 'Claro', Sun], ['dark', 'Escuro', Moon]] as [Theme, string, Icon][]).map(([k, t, Ic]) => <button key={k} onClick={() => s.set({ theme: k })} aria-pressed={s.theme === k} className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold ${s.theme === k ? 'bg-royal text-white' : 'text-muted'}`}><Ic size={18} />{t}</button>)}
+      </div>
+      <h2 className="mt-8 px-5 text-lg font-semibold lg:px-0">Notificações</h2>
+      <div className="mx-5 mt-3 overflow-hidden rounded-3xl bg-surface lg:mx-0">
+        {([['push', 'Notificações no celular'], ['email', 'E-mail'], ['whatsapp', 'WhatsApp'], ['manut', 'Alertas de manutenção'], ['agenda', 'Lembretes e status de agendamento'], ['promo', 'Promoções de parceiros']] as [keyof Prefs, string][]).map(([k, t], i) => (
+          <button key={k} role="switch" aria-checked={s.prefs[k]} onClick={() => s.set({ prefs: { ...s.prefs, [k]: !s.prefs[k] } })} className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left ${i ? 'border-t border-line' : ''} ${i === 3 ? 'border-t-4' : ''}`}>
+            <span className="font-medium">{t}</span>
+            <span className={`relative h-7 w-12 shrink-0 rounded-full transition ${s.prefs[k] ? 'bg-lime' : 'bg-line'}`}><span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${s.prefs[k] ? 'left-6' : 'left-1'}`} /></span>
+          </button>))}
+      </div>
+      <Btn kind="ghost" size="sm" className="mx-5 mt-3 lg:mx-0" onClick={() => { s.set({ notices: [{ id: uid(), kind: 'alerta', title: 'Notificação de teste', body: `Canais ativos: ${[s.prefs.push && 'celular', s.prefs.email && 'e-mail', s.prefs.whatsapp && 'WhatsApp'].filter(Boolean).join(', ') || 'nenhum'}`, date: new Date().toISOString(), read: false }, ...s.notices] }); s.say('Notificação de teste enviada') }}>Enviar notificação de teste</Btn>
       <h2 className="mt-8 px-5 text-lg font-semibold lg:px-0">Formas de pagamento</h2>
       <div className="mx-5 mt-3 grid gap-2 lg:mx-0">
-        <div className="flex items-center gap-3 rounded-2xl bg-white p-4"><QrCode size={24} className="text-[#32BCAD]" weight="fill" /><span className="flex-1"><b className="block">Pix recorrente</b><span className="text-sm text-muted">Assinatura mensal</span></span><span className="rounded-full bg-lime/20 px-2.5 py-1 text-xs font-bold text-leaf">Principal</span></div>
-        <div className="flex items-center gap-3 rounded-2xl bg-white p-4"><span className="rounded-md bg-slate px-2 py-1 text-[10px] font-bold text-white">VISA</span><span className="flex-1"><b className="block">Crédito •••• 4821</b><span className="text-sm text-muted">Vence 08/29</span></span></div>
+        <div className="flex items-center gap-3 rounded-2xl bg-surface p-4"><QrCode size={24} className="text-[#32BCAD]" weight="fill" /><span className="flex-1"><b className="block">Pix recorrente</b><span className="text-sm text-muted">Assinatura mensal</span></span><span className="rounded-full bg-lime/20 px-2.5 py-1 text-xs font-bold text-ok">Principal</span></div>
+        <div className="flex items-center gap-3 rounded-2xl bg-surface p-4"><span className="rounded-md bg-slate px-2 py-1 text-[10px] font-bold text-white">VISA</span><span className="flex-1"><b className="block">Crédito •••• 4821</b><span className="text-sm text-muted">Vence 08/29</span></span></div>
       </div>
-      <div className="mx-5 mt-8 rounded-3xl border-2 border-dashed border-line p-4 text-sm lg:mx-0">
+      <div className="mx-5 mt-8 rounded-3xl bg-royal p-4 text-sm text-white lg:mx-0">
+        <b>Perfil de demonstração</b><p className="mb-3 mt-1 text-white/75">Veja a plataforma como assinante, oficina parceira ou equipe Carrook.</p>
+        <RolePicker onPick={r => { s.set({ role: r }); nav(r === 'admin' ? '/admin' : r === 'oficina' ? '/oficina' : '/') }} />
+      </div>
+      <div className="mx-5 mt-4 rounded-3xl border-2 border-dashed border-line p-4 text-sm lg:mx-0">
         <b>Dados de demonstração</b><p className="mt-1 text-muted">Volta o app para o estado inicial, com os veículos e agendamentos de exemplo.</p>
         {resetAsk ? <div className="mt-3 flex gap-2"><Btn size="sm" kind="dark" onClick={() => { s.reset(); setResetAsk(false); s.say('Demonstração reiniciada'); nav('/') }}>Reiniciar</Btn><Btn size="sm" kind="ghost" onClick={() => setResetAsk(false)}>Cancelar</Btn></div>
           : <Btn size="sm" kind="ghost" className="mt-3" onClick={() => setResetAsk(true)}>Reiniciar demonstração</Btn>}

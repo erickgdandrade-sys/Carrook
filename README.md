@@ -26,7 +26,13 @@ npm run build    # gera app/dist
 - **Pagamento:** Pix (QR e copia e cola, 5% de desconto), crédito em até 6x, débito, Apple/Google Pay e boleto
 - **Acompanhamento do serviço:** agendado → recebido → diagnóstico → em serviço → pronto → concluído, com laudo digital e avaliação
 - **Benefícios** (cupom de combustível), **planos** (comparar e trocar, respeitando o limite de veículos), **notificações** e **perfil**
-- **Painel admin** (`#/admin`): visão geral, quadro de agendamentos (avançar o status muda a tela do cliente), oficinas (credenciar e ajustar desconto), assinantes e planos (preço e limite de veículos)
+- **Perfis de acesso (demo):** assinante, oficina parceira e equipe Carrook, com áreas protegidas
+- **Portal da oficina** (`#/oficina`): agenda, avanço de status, orçamento extra para o cliente aprovar, laudo digital, horários abertos e repasses
+- **Consulta de placa** (simulada) e **plano de manutenção por modelo** (ex.: elétrico sem óleo e correia)
+- **Carência e cobertura dos 80 itens** por plano, aplicadas no preço dos serviços
+- **Indique e ganhe**, **cupons** no cadastro (`CARROOK10`, `PRIMEIRA20`, `CK-MARINA`), **preferências de notificação** e **modo escuro**
+- **Landing page de vendas** (`#/site`), **termos de uso** e **política de privacidade** (modelos para revisão jurídica), **esqueci a senha**, **editar veículo** e **blog**
+- **Painel admin** (`#/admin`), com funil do mês e retenção: visão geral, quadro de agendamentos (avançar o status muda a tela do cliente), oficinas (credenciar e ajustar desconto), assinantes e planos (preço e limite de veículos)
 
 Os dados são de exemplo e ficam salvos no navegador. O próximo passo é ligar um backend (ex.: Supabase para autenticação e banco) e um gateway de pagamento com Pix e cartão.
 

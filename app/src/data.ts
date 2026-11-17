@@ -73,7 +73,7 @@ export interface Shop {
   id: string; name: string; photo: string; address: string; district: string
   rating: number; reviews: number; discount: number; distanceKm: number
   map: { x: number; y: number }; hours: string; phone: string
-  services: ServiceKey[]; since: number
+  services: ServiceKey[]; since: number; blocked?: string[]
   quotes: { name: string; text: string; stars: number }[]
 }
 
@@ -116,3 +116,64 @@ export const CATALOG = [
   { brand: 'Ford', model: 'Expedition', photo: img('car-suv-road') },
   { brand: 'Tesla', model: 'Model 3', photo: img('car-ev') },
 ]
+
+/* ---------- Plano de manutenção por modelo (baseado no manual) ---------- */
+// Sobrescreve os intervalos padrão; `null` = item não se aplica (ex.: elétrico não tem óleo)
+type Override = Partial<Record<ItemKey, { everyKm: number; everyMonths: number } | null>>
+export const MODEL_PLANS: Record<string, { source: string; items: Override }> = {
+  'Toyota RAV4': { source: 'Manual Toyota RAV4 (revisões a cada 10.000 km ou 12 meses)', items: { correia: null, bateria: { everyKm: 60000, everyMonths: 36 } } },
+  'Fiat 500': { source: 'Manual Fiat 500 (óleo a cada 7.500 km em uso severo)', items: { oleo: { everyKm: 7500, everyMonths: 12 }, correia: { everyKm: 50000, everyMonths: 48 } } },
+  'Toyota Camry': { source: 'Manual Toyota Camry', items: { correia: null } },
+  'Honda CR-V': { source: 'Manual Honda CR-V', items: { oleo: { everyKm: 10000, everyMonths: 12 }, correia: null } },
+  'Ford Expedition': { source: 'Manual Ford Expedition', items: { oleo: { everyKm: 12000, everyMonths: 12 }, correia: null } },
+  'Tesla Model 3': { source: 'Manual Tesla Model 3 (elétrico: sem óleo, correia ou arrefecimento do motor)', items: { oleo: null, correia: null, arrefecimento: null, filtroAr: { everyKm: 20000, everyMonths: 24 }, freios: { everyKm: 60000, everyMonths: 48 } } },
+}
+
+/* ---------- Carência e cobertura ---------- */
+export const CARENCIA_DIAS: Record<PlanId, number> = { clube: 0, start: 90, premium: 30 }
+export const COVERAGE: { group: string; items: number; examples: string; clube: string; start: string; premium: string }[] = [
+  { group: 'Freios', items: 12, examples: 'pastilhas, discos, fluido, cilindros', clube: 'Desconto', start: '50%', premium: '20%' },
+  { group: 'Suspensão e direção', items: 14, examples: 'amortecedores, buchas, terminais, alinhamento', clube: 'Desconto', start: '50%', premium: '20%' },
+  { group: 'Motor e lubrificação', items: 16, examples: 'óleo, filtros, velas, correias, juntas', clube: 'Óleo grátis 1x/ano', start: '50%', premium: '20%' },
+  { group: 'Arrefecimento', items: 8, examples: 'radiador, bomba d’água, mangueiras, válvula', clube: 'Desconto', start: '50%', premium: '20%' },
+  { group: 'Elétrica e bateria', items: 12, examples: 'bateria, alternador, motor de partida, lâmpadas', clube: 'Desconto', start: '50%', premium: '20%' },
+  { group: 'Pneus e rodas', items: 8, examples: 'rodízio, balanceamento, calibragem, válvulas', clube: 'Desconto', start: '50%', premium: '20%' },
+  { group: 'Inspeção e segurança', items: 10, examples: 'cintos, limpadores, faróis, diagnóstico', clube: 'Revisão anual', start: 'Incluído', premium: 'Incluído' },
+]
+export const NOT_COVERED = ['Pneus novos, funilaria e pintura', 'Danos por acidente, enchente ou mau uso', 'Itens de acabamento e acessórios', 'Serviços fora da rede de parceiros']
+
+/* ---------- Cupons ---------- */
+export const COUPONS: Record<string, { label: string; off: number }> = {
+  CARROOK10: { label: '10% no primeiro mês', off: 0.1 },
+  PRIMEIRA20: { label: '20% no primeiro mês', off: 0.2 },
+  'CK-MARINA': { label: 'Indicação: 50% no primeiro mês', off: 0.5 },
+}
+
+/* ---------- Consulta de placa (simulada) ---------- */
+export function lookupPlate(plate: string) {
+  const p = plate.replace(/\W/g, '').toUpperCase()
+  if (p.length !== 7) return null
+  let h = 0; for (const c of p) h = (h * 33 + c.charCodeAt(0)) >>> 0
+  const car = CATALOG[h % CATALOG.length]
+  return { index: h % CATALOG.length, brand: car.brand, model: car.model, year: 2015 + (h % 11), color: ['Prata', 'Branco', 'Preto', 'Cinza', 'Azul'][h % 5] }
+}
+
+/* ---------- Conteúdo do blog ---------- */
+export const POST_BODY: Record<string, string[]> = {
+  oleo: [
+    'O óleo lubrifica, resfria e limpa o motor. Com o tempo ele perde viscosidade e acumula resíduos, e o desgaste interno aumenta.',
+    'A regra é seguir o manual: a maioria dos carros pede troca entre 7.500 e 10.000 km ou a cada 12 meses, o que vier primeiro. Quem roda pouco também precisa trocar, porque o óleo envelhece parado.',
+    'Uso severo encurta o prazo: trânsito pesado, trajetos curtos, estrada de terra e reboque. Nesses casos, considere o intervalo menor do manual.',
+    'Na Carrook, a troca de óleo e filtro está incluída uma vez por ano em todos os planos, e o app avisa quando estiver chegando a hora.',
+  ],
+  viagem: [
+    'Dez minutos antes de pegar a estrada evitam a maioria das paradas no acostamento.',
+    'Pneus: calibre com o carro frio, incluindo o estepe, e confira se não há bolhas ou cortes. Luzes: faróis, setas, luz de freio e ré. Fluidos: óleo, arrefecimento e lavador do para-brisa.',
+    'Freios: se o pedal estiver baixo ou o carro puxar para um lado, agende uma revisão antes de viajar. Documentos: CRLV digital no celular e o app da Carrook com o contato das oficinas parceiras pelo caminho.',
+  ],
+  eletricos: [
+    'Carro elétrico tem menos peças móveis: não tem óleo de motor, velas nem correia dentada. Mas não é livre de manutenção.',
+    'Freios duram mais por causa da regeneração, porém o fluido ainda precisa ser trocado. Pneus gastam mais rápido pelo peso e torque. Filtro de cabine, suspensão e a bateria de 12 V também entram no plano.',
+    'O app da Carrook ajusta a estrada da manutenção para elétricos, mostrando só o que se aplica ao seu modelo.',
+  ],
+}

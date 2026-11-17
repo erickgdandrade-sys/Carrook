@@ -1,20 +1,24 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        ice: '#F9FDFF',
-        mist: '#EEF1FA',
-        line: '#DFE3F1',
+        ice: 'rgb(var(--ice) / <alpha-value>)',
+        mist: 'rgb(var(--mist) / <alpha-value>)',
+        line: 'rgb(var(--line) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
+        fg: 'rgb(var(--fg) / <alpha-value>)',
         navy: '#3A43A4',
         royal: '#1F55E1',
         violet: '#5A66F6',
         lime: '#41D92A',
         leaf: '#4EA531',
+        ok: 'rgb(var(--ok) / <alpha-value>)',
         ink: '#0A0A0A',
         slate: '#151A3B',
-        muted: '#676E92',
+        muted: 'rgb(var(--muted) / <alpha-value>)',
         amber: '#F2A516',
         danger: '#E5484D',
       },

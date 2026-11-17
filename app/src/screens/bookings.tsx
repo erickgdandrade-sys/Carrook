@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CheckCircle, MapPin, CalendarBlank, X, Star, Car, Wrench, MagnifyingGlass, Flag, ClipboardText, Check } from '@phosphor-icons/react'
 import { SERVICES } from '../data'
+import { ExtraApproval } from './extra'
 import { STATUS_FLOW, STATUS_LABEL, brl, useStore, type BookingStatus } from '../store'
 import { Btn, PageHead, SERVICE_ICON, fmtDate } from '../ui'
 
 const chip: Record<BookingStatus, string> = {
   agendado: 'bg-royal/10 text-royal', recebido: 'bg-violet/15 text-violet', diagnostico: 'bg-amber/15 text-[#9A6200]', servico: 'bg-amber/15 text-[#9A6200]',
-  pronto: 'bg-lime/20 text-leaf', concluido: 'bg-mist text-muted', cancelado: 'bg-danger/10 text-danger',
+  pronto: 'bg-lime/20 text-ok', concluido: 'bg-mist text-muted', cancelado: 'bg-danger/10 text-danger',
 }
 export const StatusChip = ({ s }: { s: BookingStatus }) => <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${chip[s]}`}>{STATUS_LABEL[s]}</span>
 
@@ -24,14 +25,14 @@ export function Bookings() {
         <div><p className="text-[13px] font-semibold uppercase tracking-[.1em] text-white/60">Economia com a Carrook</p><p className="text-3xl font-extrabold tabular-nums">{brl(saved)}</p></div>
         <Link to="/oficinas" className="rounded-full bg-lime px-4 py-2.5 text-sm font-bold text-ink">Novo</Link>
       </div>
-      <div className="mx-5 mb-4 grid grid-cols-2 rounded-full bg-white p-1 text-sm font-semibold lg:mx-0 lg:w-80">
+      <div className="mx-5 mb-4 grid grid-cols-2 rounded-full bg-surface p-1 text-sm font-semibold lg:mx-0 lg:w-80">
         {(['proximos', 'anteriores'] as const).map(t => <button key={t} onClick={() => setTab(t)} className={`rounded-full py-2 ${tab === t ? 'bg-slate text-white' : 'text-muted'}`}>{t === 'proximos' ? 'Próximos' : 'Anteriores'}</button>)}
       </div>
       <div className="grid gap-3 px-5 lg:grid-cols-2 lg:px-0">
         {list.map(b => {
           const shop = s.shops.find(x => x.id === b.shopId)!, v = s.vehicles.find(x => x.id === b.vehicleId), Ic = SERVICE_ICON[b.service]
           return (
-            <Link key={b.id} to={`/agendamentos/${b.id}`} className="flex gap-4 rounded-3xl bg-white p-4">
+            <Link key={b.id} to={`/agendamentos/${b.id}`} className="flex gap-4 rounded-3xl bg-surface p-4">
               <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-mist"><Ic size={22} /></span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-start justify-between gap-2"><b className="truncate">{SERVICES[b.service].short}</b><StatusChip s={b.status} /></span>
@@ -40,7 +41,7 @@ export function Bookings() {
               </span>
             </Link>)
         })}
-        {!list.length && <p className="rounded-3xl bg-white p-6 text-center text-muted lg:col-span-2">{tab === 'proximos' ? 'Nenhum agendamento em aberto.' : 'Nada por aqui ainda.'}</p>}
+        {!list.length && <p className="rounded-3xl bg-surface p-6 text-center text-muted lg:col-span-2">{tab === 'proximos' ? 'Nenhum agendamento em aberto.' : 'Nada por aqui ainda.'}</p>}
       </div>
     </div>
   )
@@ -74,7 +75,7 @@ export function BookingDetail() {
 
       <div className="mt-5 grid gap-5 px-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:px-0">
         {/* Linha do tempo */}
-        <section className="rounded-3xl bg-white p-5">
+        <section className="rounded-3xl bg-surface p-5">
           <div className="mb-4 flex items-center justify-between"><h2 className="font-semibold">Acompanhamento</h2><StatusChip s={b.status} /></div>
           {b.status === 'cancelado' ? <p className="text-sm text-muted">Este agendamento foi cancelado.</p> : (
             <ol className="relative">
@@ -91,17 +92,18 @@ export function BookingDetail() {
                   </li>)
               })}
             </ol>)}
-          {b.status === 'concluido' && (
+          {(b.status === 'concluido' || b.report) && (
             <div className="mt-5 rounded-2xl bg-mist p-4">
               <p className="flex items-center gap-2 font-semibold"><ClipboardText size={20} className="text-royal" />Laudo digital</p>
-              <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">{['Freios e discos', 'Suspensão dianteira', 'Fluidos e vazamentos', 'Bateria e alternador', 'Pneus e calibragem', 'Luzes e elétrica'].map(x => <li key={x} className="flex items-center gap-2"><CheckCircle size={16} weight="fill" className="text-leaf" />{x}: ok</li>)}</ul>
+              <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">{Object.entries(b.report ?? { 'Freios e discos': 'ok', 'Suspensão dianteira': 'ok', 'Fluidos e vazamentos': 'ok', 'Bateria e alternador': 'ok', 'Pneus e calibragem': 'ok', 'Luzes e elétrica': 'ok' }).map(([x, m]) => <li key={x} className="flex items-center gap-2"><CheckCircle size={16} weight="fill" className={m === 'ok' ? 'text-ok' : m === 'atencao' ? 'text-amber' : 'text-danger'} />{x}: {m === 'ok' ? 'ok' : m === 'atencao' ? 'atenção' : 'trocar'}</li>)}</ul>
               <p className="mt-3 text-sm font-semibold">Como foi o atendimento?</p>
               <div className="mt-1 flex gap-1">{[1, 2, 3, 4, 5].map(n => <button key={n} onClick={() => { setRated(n); s.say('Obrigado pela avaliação!') }} aria-label={`${n} estrelas`}><Star size={28} weight={n <= rated ? 'fill' : 'regular'} className={n <= rated ? 'text-amber' : 'text-muted'} /></button>)}</div>
             </div>)}
         </section>
 
         <aside className="grid content-start gap-4">
-          <div className="overflow-hidden rounded-3xl bg-white">
+          {b.extra && <ExtraApproval id={b.id} />}
+          <div className="overflow-hidden rounded-3xl bg-surface">
             <img src={shop.photo} alt="" className="h-28 w-full object-cover" />
             <div className="p-4">
               <b className="block">{shop.name}</b>
@@ -109,10 +111,10 @@ export function BookingDetail() {
               {v && <span className="mt-3 flex items-center gap-3 rounded-2xl bg-mist p-2 pr-3"><img src={v.photo} alt="" className="h-10 w-14 rounded-xl object-cover" /><span className="text-sm"><b className="block">{v.brand} {v.model}</b><span className="text-muted">{v.plate}</span></span></span>}
             </div>
           </div>
-          <div className="rounded-3xl bg-white p-4 text-sm">
+          <div className="rounded-3xl bg-surface p-4 text-sm">
             <div className="flex justify-between"><span className="text-muted">Pagamento</span><b>{b.payment}</b></div>
             <div className="mt-1.5 flex justify-between"><span className="text-muted">Valor</span><b className="tabular-nums">{brl(b.price)}</b></div>
-            <div className="mt-1.5 flex justify-between text-leaf"><span>Você economizou</span><b className="tabular-nums">{brl(b.base - b.price)}</b></div>
+            <div className="mt-1.5 flex justify-between text-ok"><span>Você economizou</span><b className="tabular-nums">{brl(b.base - b.price)}</b></div>
           </div>
           {b.status === 'agendado' && (cancel ? (
             <div className="rounded-3xl bg-danger/10 p-4 text-sm">

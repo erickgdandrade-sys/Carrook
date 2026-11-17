@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware'
-import { ITEMS, PLANS, SERVICES, SHOPS, img, type ItemKey, type PlanId, type ServiceKey, type Shop } from './data'
+import { CARENCIA_DIAS, ITEMS, MODEL_PLANS, PLANS, SERVICES, SHOPS, img, type ItemKey, type PlanId, type ServiceKey, type Shop } from './data'
 
 /* ---------- Tipos ---------- */
 export interface Vehicle {
@@ -12,7 +12,13 @@ export type BookingStatus = 'agendado' | 'recebido' | 'diagnostico' | 'servico' 
 export interface Booking {
   id: string; vehicleId: string; shopId: string; service: ServiceKey; date: string; time: string
   price: number; base: number; payment: string; status: BookingStatus; customer: string; createdAt: string; note?: string
+  extra?: { desc: string; value: number; status: 'pendente' | 'aprovado' | 'recusado' }
+  report?: Record<string, ReportMark>
 }
+export type ReportMark = 'ok' | 'atencao' | 'trocar'
+export type Role = 'cliente' | 'oficina' | 'admin'
+export type Theme = 'system' | 'light' | 'dark'
+export interface Prefs { push: boolean; email: boolean; whatsapp: boolean; manut: boolean; agenda: boolean; promo: boolean }
 export interface Notice { id: string; kind: 'alerta' | 'agenda' | 'promo' | 'km'; title: string; body: string; date: string; read: boolean; to?: string }
 export interface Subscriber { id: string; name: string; city: string; plan: PlanId; vehicles: number; since: string; status: 'ativo' | 'atrasado' | 'cancelado' }
 
@@ -68,6 +74,10 @@ export const SUBSCRIBERS: Subscriber[] = NAMES.map((n, i) => ({
 /* ---------- Store ---------- */
 interface State {
   signedIn: boolean
+  role: Role
+  planSince: string
+  theme: Theme
+  prefs: Prefs
   user: { name: string; email: string; phone: string }
   plan: PlanId
   yearlyUsed: Partial<Record<ServiceKey, boolean>>
@@ -88,6 +98,10 @@ interface State {
   book: (b: Omit<Booking, 'id' | 'createdAt' | 'status' | 'customer'>) => string
   setStatus: (id: string, s: BookingStatus) => void
   readAll: () => void
+  proposeExtra: (id: string, desc: string, value: number) => void
+  answerExtra: (id: string, ok: boolean) => void
+  saveReport: (id: string, r: Record<string, ReportMark>) => void
+  updateVehicle: (id: string, p: Partial<Vehicle>) => void
   reset: () => void
 }
 
@@ -99,6 +113,10 @@ const safeStorage: StateStorage = {
 
 const initial = () => ({
   signedIn: false,
+  role: 'cliente' as Role,
+  planSince: ago(200),
+  theme: 'system' as Theme,
+  prefs: { push: true, email: true, whatsapp: true, manut: true, agenda: true, promo: false } as Prefs,
   user: { name: 'Marina Costa', email: 'marina@exemplo.com', phone: '(48) 99190-0000' },
   plan: 'start' as PlanId,
   yearlyUsed: {} as State['yearlyUsed'],
@@ -163,7 +181,18 @@ export const useStore = create<State>()(persist((set, get) => ({
     }
   }),
   readAll: () => set(s => ({ notices: s.notices.map(n => ({ ...n, read: true })) })),
-  reset: () => set({ ...initial(), signedIn: true }),
+  proposeExtra: (id, desc, value) => set(s => {
+    const b = s.bookings.find(x => x.id === id)
+    const mine = b && b.vehicleId !== '-'
+    return {
+      bookings: s.bookings.map(x => x.id === id ? { ...x, extra: { desc, value, status: 'pendente' as const } } : x),
+      notices: mine ? [{ id: uid(), kind: 'alerta' as const, title: 'Orçamento extra para aprovar', body: `${desc}: ${brl(value)} (antes da cobertura do plano)`, date: new Date().toISOString(), read: false, to: '/agendamentos/' + id }, ...s.notices] : s.notices,
+    }
+  }),
+  answerExtra: (id, ok) => set(s => ({ bookings: s.bookings.map(x => x.id === id && x.extra ? { ...x, extra: { ...x.extra, status: ok ? 'aprovado' as const : 'recusado' as const } } : x) })),
+  saveReport: (id, r) => set(s => ({ bookings: s.bookings.map(x => x.id === id ? { ...x, report: r } : x) })),
+  updateVehicle: (id, p) => set(s => ({ vehicles: s.vehicles.map(v => v.id === id ? { ...v, ...p } : v) })),
+  reset: () => set(s => ({ ...initial(), signedIn: true, role: s.role, theme: s.theme })),
 }), {
   name: 'carrook-v1',
   storage: createJSONStorage(() => safeStorage),
@@ -177,7 +206,9 @@ export type Level = 'ok' | 'soon' | 'late'
 export interface ItemState { key: ItemKey; name: string; service: ServiceKey; progress: number; kmLeft: number; daysLeft: number; level: Level; dueKm: number; by: 'km' | 'tempo' }
 export function itemStates(v: Vehicle, auto: boolean): ItemState[] {
   const km = currentKm(v, auto)
-  return ITEMS.map(it => {
+  const plan = MODEL_PLANS[`${v.brand} ${v.model}`]?.items ?? {}
+  return ITEMS.filter(it => plan[it.key] !== null).map(base => {
+    const it = { ...base, ...(plan[base.key] ?? {}) }
     const l = v.last[it.key]
     const pk = (km - l.km) / it.everyKm
     const pt = daysSince(l.date) / (it.everyMonths * 30.4)
@@ -193,11 +224,15 @@ export function healthScore(v: Vehicle, auto: boolean) {
 }
 
 export interface Quote { base: number; total: number; label: string; saved: number; kind: 'incluido' | 'cobertura' | 'desconto' }
-export function quote(plan: PlanId, shop: Shop, svc: ServiceKey, yearlyUsed: State['yearlyUsed']): Quote {
+export const carenciaLeft = (plan: PlanId, since: string) => Math.max(0, CARENCIA_DIAS[plan] - daysSince(since))
+export function quote(plan: PlanId, shop: Shop, svc: ServiceKey, yearlyUsed: State['yearlyUsed'], since: string = useStore.getState().planSince): Quote {
   const s = SERVICES[svc]
   const p = PLANS.find(x => x.id === plan)!
   const partner = Math.round(s.base * (1 - shop.discount / 100) * 100) / 100
   if (s.includedYearly && !yearlyUsed[svc]) return { base: s.base, total: 0, label: 'Incluído no seu plano (1x por ano)', saved: s.base, kind: 'incluido' }
+  if (p.copay && carenciaLeft(plan, since) > 0) {
+    return { base: s.base, total: partner, label: `Carência: cobertura libera em ${carenciaLeft(plan, since)} dias`, saved: s.base - partner, kind: 'desconto' }
+  }
   if (p.copay) {
     const t = Math.round(partner * p.copay * 100) / 100
     return { base: s.base, total: t, label: `Cobertura ${p.short}: você paga ${p.copay * 100}%`, saved: s.base - t, kind: 'cobertura' }
