@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Bell, DotsThreeVertical, GasPump, ArrowRight, CalendarBlank, MapPin, Plus, Lightning } from '@phosphor-icons/react'
+import { Bell, DotsThreeVertical, GasPump, ArrowRight, CalendarCheck, MapPin, Plus, Lightning, Heartbeat, Wrench } from '@phosphor-icons/react'
 import { POSTS, PLANS, SERVICES, cut, type ServiceKey } from '../data'
+import { SHOPS } from '../data'
 import { brl, currentKm, daysSince, fmtKm, healthScore, itemStates, quote, useStore, type Vehicle } from '../store'
-import { ThemeSwitch, Btn, Gauge, ITEM_ICON, LEVEL, LogoMark, Plate, SERVICE_ICON, Section, fmtDate } from '../ui'
+import { ThemeSwitch, Btn, ITEM_ICON, LEVEL, LogoMark, Plate, SERVICE_ICON, Section, fmtDate } from '../ui'
+import { Bento, Bars, Field, Mini, Pill, Row } from '../bento'
 
 const HOME_SERVICES: ServiceKey[] = ['revisao', 'oleo', 'freios', 'alinhamento', 'bateria', 'diagnostico']
 
@@ -43,47 +45,33 @@ export function Home() {
         </p>
       </div>
 
-      <div className="-mt-[104px] lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:gap-6">
+      <div className="-mt-[104px] lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-5">
         <VehicleCarousel vehicles={s.vehicles} index={vIndex} onIndex={i => s.set({ activeVehicle: s.vehicles[i].id })} autoKm={s.autoKm} />
 
-        <div className="mt-5 grid gap-4 px-5 lg:mt-0 lg:px-0">
-          {/* Saúde do veículo */}
-          <button onClick={() => nav(`/veiculos/${v.id}`)} className="relative overflow-hidden rounded-3xl bg-navy p-5 text-left text-white">
-            <div className="flex items-center gap-4">
-              <div className="-mb-2 shrink-0"><Gauge score={score} size={124} /></div>
-              <div className="min-w-0">
-                <p className="text-[13px] font-semibold uppercase tracking-[.12em] text-white/60">Saúde do veículo</p>
-                <p className="mt-1 text-[17px] font-semibold leading-snug">{attention.length ? `${attention[0].name} ${attention[0].level === 'late' ? 'com prazo vencido' : 'vencendo em breve'}${attention.length > 1 ? `, e mais ${attention.length - 1} ${attention.length > 2 ? 'itens' : 'item'}` : ''}.` : 'Nenhuma manutenção pendente.'}</p>
-                <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-lime">Ver plano de manutenção <ArrowRight size={14} weight="bold" /></span>
-              </div>
-            </div>
-          </button>
-
-          {/* Próximo agendamento */}
-          {next ? <NextBooking id={next.id} /> : (
-            <Link to="/oficinas" className="flex items-center gap-4 rounded-3xl border-2 border-dashed border-line bg-surface/60 p-4">
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-mist text-royal"><CalendarBlank size={24} /></span>
-              <span className="flex-1"><b className="block">Nada agendado</b><span className="text-sm text-muted">Encontre uma oficina parceira</span></span><ArrowRight size={18} className="text-muted" />
-            </Link>
-          )}
-
-          {/* Itens que pedem atenção */}
-          <div className="card divide-y divide-line">
-            {states.slice(0, 3).map(it => {
-              const Ic = ITEM_ICON[it.key], L = LEVEL[it.level]
-              return (
-                <Link key={it.key} to={`/oficinas?servico=${it.service}`} className="flex items-center gap-3 p-4">
-                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${L.bg} ${L.text}`}><Ic size={20} weight="duotone" /></span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-baseline justify-between gap-2"><b className="truncate text-[15px] font-semibold">{it.name}</b><span className={`shrink-0 text-xs font-bold ${L.text}`}>{L.label}</span></span>
-                    <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-mist"><span className={`block h-full rounded-full ${L.bar}`} style={{ width: `${Math.min(100, it.progress * 100)}%` }} /></span>
-                    <span className="mt-1 block text-xs text-muted">{it.level === 'late' ? `Venceu por ${it.by}` : it.kmLeft > 0 ? `Faltam ${fmtKm(it.kmLeft)} ou ${Math.max(0, Math.round(it.daysLeft / 30))} meses` : 'Vencendo agora'}</span>
-                  </span>
+        {/* Bloco: saúde do veículo */}
+        <div className="mt-5 px-5 lg:mt-0 lg:px-0">
+          <Bento tone="navy" eyebrow="Saúde do veículo" className="h-full"
+            title={attention.length ? <>{attention.length} {attention.length > 1 ? 'itens pedem' : 'item pede'} atenção</> : 'Tudo em dia'}
+            desc={`O plano do ${v.model} segue o manual e o seu uso. Vence o que chegar primeiro: km ou tempo.`}>
+            <Mini title="Plano de manutenção" right={<span className="flex items-center gap-1.5 text-[12px] font-semibold text-muted"><span className={`h-2 w-2 rounded-full ${score >= 75 ? 'bg-lime' : score >= 50 ? 'bg-amber' : 'bg-danger'}`} />Saúde {score}</span>}>
+              {states.slice(0, 3).map(it => {
+                const Ic = ITEM_ICON[it.key], L = LEVEL[it.level]
+                return <Link key={it.key} to={`/oficinas?servico=${it.service}`} className="block">
+                  <Row avatar={<span className={`grid h-full w-full place-items-center ${L.bg} ${L.text}`}><Ic size={20} weight="duotone" /></span>} name={it.name} sub={L.label}
+                    top={it.level === 'late' ? 'Venceu por' : 'Vence em'} bottom={it.level === 'late' ? it.by : it.kmLeft > 0 ? fmtKm(it.kmLeft) : 'agora'} accent={L.text} />
                 </Link>
-              )
-            })}
-          </div>
+              })}
+              <Link to={`/veiculos/${v.id}`} className="mt-3 flex items-center justify-center gap-1.5 rounded-full bg-mist py-2.5 text-[13px] font-semibold text-royal">Ver estrada da manutenção <ArrowRight size={14} weight="bold" /></Link>
+            </Mini>
+          </Bento>
         </div>
+      </div>
+
+      <div className="mt-5 grid gap-5 px-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:px-0">
+        {/* Bloco: agendamento rápido */}
+        <QuickBook vehicle={v} next={next?.id} />
+        {/* Bloco: seus números */}
+        <Numbers score={score} />
       </div>
 
       {/* ===== Serviços ===== */}
@@ -200,23 +188,71 @@ function ServiceCard({ k }: { k: ServiceKey }) {
   )
 }
 
-function NextBooking({ id }: { id: string }) {
-  const b = useStore(s => s.bookings.find(x => x.id === id))!
-  const shop = useStore(s => s.shops.find(x => x.id === b.shopId))!
-  const d = new Date(b.date)
+function QuickBook({ vehicle, next }: { vehicle: Vehicle; next?: string }) {
+  const s = useStore()
+  const nav = useNavigate()
+  const [svc, setSvc] = useState<ServiceKey>('freios')
+  const [vid, setVid] = useState(vehicle.id)
+  const v = s.vehicles.find(x => x.id === vid) ?? vehicle
+  const options = s.shops.filter(x => x.services.includes(svc)).map(x => ({ shop: x, q: quote(s.plan, x, svc, s.yearlyUsed) })).sort((a, b) => a.q.total - b.q.total)
+  const best = options[0]
+  const b = next ? s.bookings.find(x => x.id === next) : undefined
+  const bShop = b && s.shops.find(x => x.id === b.shopId)
+  const Ic = SERVICE_ICON[svc]
   return (
-    <Link to={`/agendamentos/${b.id}`} className="flex items-stretch overflow-hidden rounded-3xl bg-surface">
-      <div className="flex w-20 shrink-0 flex-col items-center justify-center bg-royal text-white">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-white/70">{fmtDate(b.date, { month: 'short' })}</span>
-        <span className="text-3xl font-extrabold leading-none">{d.getDate()}</span>
-        <span className="mt-1 text-xs font-semibold">{b.time}</span>
+    <Bento tone="lime" eyebrow="Agendamento rápido" title="Agende e pague em segundos" desc="Escolha o serviço e veja na hora quanto você paga no seu plano.">
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] [&>*]:min-w-0">
+        <Mini title="Novo serviço">
+          <label className="mt-3 block"><span className="mb-1.5 block text-[12px] text-muted">Veículo</span>
+            <span className="relative flex h-11 items-center gap-2 rounded-xl border border-line px-2">
+              <img src={cut(v.photo)} alt="" className="h-7 w-10 object-contain" />
+              <select id="qb-vehicle" value={vid} onChange={e => setVid(e.target.value)} className="h-full flex-1 appearance-none bg-transparent text-[14px] font-medium outline-none">{s.vehicles.map(x => <option key={x.id} value={x.id}>{x.brand} {x.model}</option>)}</select>
+            </span></label>
+          <label className="mt-3 block"><span className="mb-1.5 block text-[12px] text-muted">Serviço</span>
+            <span className="relative flex h-11 items-center gap-2 rounded-xl border border-line px-3">
+              <Ic size={18} className="text-royal" />
+              <select id="qb-service" value={svc} onChange={e => setSvc(e.target.value as ServiceKey)} className="h-full flex-1 appearance-none bg-transparent text-[14px] font-medium outline-none">{(Object.keys(SERVICES) as ServiceKey[]).map(k => <option key={k} value={k}>{SERVICES[k].short}</option>)}</select>
+            </span></label>
+          <Field label="Você paga a partir de"><b className="tabular-nums">{best ? (best.q.total === 0 ? 'Incluído no plano' : brl(best.q.total)) : '—'}</b></Field>
+          <Btn kind="dark" className="mt-4 w-full" onClick={() => nav(`/oficinas?servico=${svc}`)}>Ver oficinas</Btn>
+        </Mini>
+        <div className="grid min-w-0 content-start gap-3">
+          <Mini>
+            <span className="text-[12px] text-muted">Você economiza</span>
+            <p className="text-[28px] font-bold tabular-nums leading-tight">{best ? brl(best.q.saved) : '—'}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5"><Pill>Pix 5%</Pill><Pill>6x sem juros</Pill><Pill>{PLANS.find(p => p.id === s.plan)!.short}</Pill></div>
+            {best && <div className="mt-3 border-t border-line pt-3"><Row avatar={<img src={best.shop.photo} alt="" className="h-full w-full object-cover" />} name={best.shop.name} sub="Melhor preço para você" /></div>}
+          </Mini>
+          <Mini>
+            {b && bShop ? (
+              <Link to={`/agendamentos/${b.id}`} className="flex items-center gap-3">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-royal text-white"><CalendarCheck size={24} weight="fill" /></span>
+                <span className="min-w-0"><b className="block text-[14px]">{SERVICES[b.service].short} agendado</b><span className="block truncate text-[12px] text-muted">{fmtDate(b.date, { weekday: 'short', day: 'numeric', month: 'short' })}, {b.time} · {bShop.name}</span></span>
+              </Link>
+            ) : <p className="flex items-center gap-3 text-[13px] text-muted"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-mist text-royal"><MapPin size={22} /></span>{SHOPS.length} oficinas parceiras perto de você</p>}
+          </Mini>
+        </div>
       </div>
-      <div className="min-w-0 flex-1 p-4">
-        <p className="text-[12px] font-semibold uppercase tracking-[.1em] text-royal">Próximo agendamento</p>
-        <b className="block truncate text-[16px]">{SERVICES[b.service].name}</b>
-        <span className="mt-0.5 flex items-center gap-1 truncate text-sm text-muted"><MapPin size={14} />{shop.name}</span>
+    </Bento>
+  )
+}
+
+function Numbers({ score }: { score: number }) {
+  const s = useStore()
+  const mine = s.bookings.filter(b => b.vehicleId !== '-' && b.status !== 'cancelado')
+  const saved = mine.reduce((a, b) => a + (b.base - b.price), 0)
+  const done = mine.filter(b => b.status === 'concluido').length
+  // economia por mês (últimos 6), a partir dos agendamentos
+  const months = Array.from({ length: 6 }, (_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - (5 - i)); return d })
+  const data = months.map(d => ({ label: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''), value: mine.filter(b => { const x = new Date(b.date); return x.getMonth() === d.getMonth() && x.getFullYear() === d.getFullYear() }).reduce((a, b) => a + (b.base - b.price), 0) }))
+  return (
+    <Bento tone="violet" eyebrow="Seus números" title="Saúde e economia do seu carro" desc="Tudo que a Carrook já fez por você, mês a mês.">
+      <div className="grid grid-cols-2 gap-3">
+        <Mini><span className="flex items-center gap-1.5 text-[12px] text-muted"><Heartbeat size={15} weight="fill" className="text-royal" />Saúde</span><p className="text-[26px] font-bold tabular-nums">{score}<small className="text-[13px] font-medium text-muted">/100</small></p></Mini>
+        <Mini><span className="flex items-center gap-1.5 text-[12px] text-muted"><Wrench size={15} weight="fill" className="text-royal" />Serviços feitos</span><p className="text-[26px] font-bold tabular-nums">{done}</p></Mini>
+        <Mini className="col-span-2"><span className="text-[12px] text-muted">Economia total com a Carrook</span><p className="text-[28px] font-bold tabular-nums leading-tight">{brl(saved)}</p><Bars data={data} /></Mini>
       </div>
-    </Link>
+    </Bento>
   )
 }
 

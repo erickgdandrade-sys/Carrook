@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Bell, CalendarCheck, Tag, Gauge as GaugeIcon, GasPump, Check, Car, Crown, Gift, User, SignOut, ChartLineUp, CaretRight, Wrench, ShieldCheck, Percent, QrCode, ArrowCounterClockwise, Handshake, Storefront, FileText, Globe, Moon, Sun, Desktop, type Icon } from '@phosphor-icons/react'
 import { CARENCIA_DIAS, FUEL, NOT_COVERED, PLANS, type PlanId } from '../data'
 import { Coverage, RolePicker } from './extra'
+import { PricingCards } from '../bento'
 import { brl, carenciaLeft, uid, useStore, type Notice, type Prefs, type Theme } from '../store'
 import { BrandPattern, Btn, LogoMark, PageHead, ThemeSwitch, fmtDate } from '../ui'
 
@@ -87,24 +88,12 @@ export function PlanPage() {
           <LogoMark size={64} color="#41D92A" />
         </div>
       </div>
-      <h2 className="mt-8 px-5 text-lg font-semibold lg:px-0">Compare os planos</h2>
-      <div className="no-scrollbar mt-3 flex snap-x gap-4 overflow-x-auto px-5 pb-3 pt-3 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0">
-        {PLANS.map(p => {
-          const mine = p.id === s.plan, dark = p.popular
-          return (
-            <article key={p.id} className={`relative flex w-[280px] shrink-0 snap-center flex-col rounded-3xl p-6 lg:w-auto ${dark ? 'bg-navy text-white' : 'bg-surface'} ${mine ? 'ring-[3px] ring-lime' : ''}`}>
-              {p.popular && <span className="absolute -top-3 left-6 rounded-full bg-lime px-3 py-1 text-xs font-bold text-ink">⚡ Popular</span>}
-              <h3 className="text-xl font-bold">{p.name}</h3>
-              <p className={`mt-1 text-sm ${dark ? 'text-white/70' : 'text-muted'}`}>{p.tagline}</p>
-              <p className="mt-4"><span className={`text-sm ${dark ? 'text-white/70' : 'text-muted'}`}>a partir de</span><span className="block text-[38px] font-extrabold leading-none tabular-nums">{brl(s.planPrices[p.id]).replace(',00', '')}<small className={`text-base font-medium ${dark ? 'text-white/60' : 'text-muted'}`}>/mês</small></span></p>
-              <ul className="mt-5 grid flex-1 content-start gap-2.5 text-[15px]">
-                {[...p.perks, `Até ${s.planLimits[p.id]} ${s.planLimits[p.id] > 1 ? 'veículos' : 'veículo'}`].map(x => <li key={x} className="flex gap-2.5"><span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-lime text-ink"><Check size={12} weight="bold" /></span>{x}</li>)}
-              </ul>
-              {mine ? <Btn kind={dark ? 'white' : 'ghost'} className="mt-6" disabled>Seu plano</Btn>
-                : pick === p.id ? <div className="mt-6 grid gap-2"><Btn onClick={() => change(p.id)}>Confirmar troca</Btn><Btn kind={dark ? 'outline' : 'ghost'} onClick={() => setPick(undefined)}>Cancelar</Btn></div>
-                  : <Btn kind={dark ? 'lime' : 'royal'} className="mt-6" onClick={() => setPick(p.id)}>Mudar para {p.short}</Btn>}
-            </article>)
-        })}
+      <div className="mt-8 flex flex-wrap items-end justify-between gap-2 px-5 lg:px-0"><h2 className="text-[30px] font-extrabold leading-none lg:text-[40px]">Compare os planos</h2><p className="max-w-sm text-sm text-muted">Cobertura de até 80 itens, oficinas certificadas e descontos. Troque quando quiser.</p></div>
+      <div className="mt-2 px-5 lg:px-0">
+        <PricingCards current={s.plan} cta={(id, dark) => id === s.plan
+          ? <Btn kind={dark ? 'white' : 'ghost'} size="lg" className="w-full" disabled>Seu plano atual</Btn>
+          : pick === id ? <div className="grid gap-2"><Btn size="lg" className="w-full" onClick={() => change(id)}>Confirmar troca</Btn><Btn kind={dark ? 'outline' : 'ghost'} className="w-full" onClick={() => setPick(undefined)}>Cancelar</Btn></div>
+            : <Btn kind={dark ? 'lime' : 'dark'} size="lg" className="w-full" onClick={() => setPick(id)}>Mudar para {PLANS.find(p => p.id === id)!.short}</Btn>} />
       </div>
       <p className="mx-5 mt-4 text-sm leading-relaxed text-muted lg:mx-0">Coparticipação é a parte do custo que você paga nos serviços cobertos: no Start, metade; no Premium, 20%. Revisão anual e troca de óleo estão incluídas em todos os planos. Trocar para um plano com mais cobertura reinicia a carência.</p>
       <h2 className="mt-8 px-5 text-lg font-semibold lg:px-0">O que os 80 itens cobrem</h2>

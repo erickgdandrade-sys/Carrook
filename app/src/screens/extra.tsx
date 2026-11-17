@@ -2,17 +2,17 @@ import { useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft, ArrowRight, Bell, Check, CheckCircle, Copy, Gift, Kanban, Money, ShieldCheck, Storefront, Warning,
-  WhatsappLogo, EnvelopeSimple, InstagramLogo, Clock, X, Lock, Car, Wrench, type Icon,
+  WhatsappLogo, EnvelopeSimple, InstagramLogo, Clock, X, Lock, Car, Wrench, Sparkle, Heartbeat, ClipboardText, type Icon,
 } from '@phosphor-icons/react'
 import { COVERAGE, PLANS, POSTS, POST_BODY, SERVICES, cut, img } from '../data'
 import { STATUS_FLOW, STATUS_LABEL, brl, useStore, type ReportMark, type Role } from '../store'
 import { BrandPattern, Btn, LogoMark, PageHead, Seal, Stars, ThemeSwitch, Wordmark, fmtDate } from '../ui'
 import { StatusChip } from './bookings'
+import { Bento, Bars, Field, Mini, Pill, PricingCards, Row } from '../bento'
 
 /* =================== Landing page de vendas =================== */
 export function Landing() {
-  const prices = useStore(s => s.planPrices)
-  const limits = useStore(s => s.planLimits)
+  const nav = useNavigate()
   const [faq, setFaq] = useState<number | null>(0)
   const FAQ = [
     ['Como funciona a coparticipação?', 'Nos serviços cobertos, você paga só uma parte: 50% no Start e 20% no Premium. A Carrook paga o resto direto para a oficina.'],
@@ -21,14 +21,17 @@ export function Landing() {
     ['Como o app sabe a quilometragem?', 'Você informa quando quiser, e o app estima pelo seu uso entre uma atualização e outra.'],
     ['Posso cancelar?', 'Pode, a qualquer momento, pelo próprio app.'],
   ]
+  const avatar = (n: string) => <img src={cut(img(n))} alt="" className="h-8 w-10 object-contain" />
+  const wrap = 'mx-auto max-w-6xl px-5'
   return (
     <div className="bg-ice text-fg">
       <header className="sticky top-0 z-40 border-b border-line bg-ice/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
+        <div className={`${wrap} flex items-center justify-between py-3`}>
           <span className="flex items-center gap-2 text-royal"><LogoMark size={28} /><Wordmark className="text-lg text-fg" /></span>
-          <nav className="flex items-center gap-2 text-sm font-semibold">
+          <nav className="flex items-center gap-1 text-sm font-semibold sm:gap-2">
+            <a href="#recursos" className="hidden px-3 py-2 md:block">Recursos</a>
             <a href="#planos" className="hidden px-3 py-2 sm:block">Planos</a>
-            <a href="#duvidas" className="hidden px-3 py-2 sm:block">Dúvidas</a>
+            <a href="#duvidas" className="hidden px-3 py-2 md:block">Dúvidas</a>
             <ThemeSwitch tone="plain" className="mx-1" />
             <Link to="/entrar" className="px-3 py-2">Entrar</Link>
             <Link to="/cadastro" className="rounded-full bg-lime px-4 py-2 text-ink">Assinar</Link>
@@ -36,60 +39,94 @@ export function Landing() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden bg-royal text-white">
-        <BrandPattern opacity={0.07} />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-5 py-14 lg:grid-cols-2 lg:py-20">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[.14em] text-lime">O plano de saúde do seu carro</p>
-            <h1 className="mt-3 text-[44px] font-extrabold leading-[1.02] lg:text-[64px]"><i>Facilitar &amp; transformar</i> em rotina a manutenção do seu veículo.</h1>
-            <p className="mt-5 max-w-lg text-lg text-white/85">Alertas no app, oficinas certificadas com desconto e cobertura de até 80 itens. A partir de {brl(prices.clube).replace(',00', '')} por mês.</p>
-            <div className="mt-8 flex flex-wrap gap-3"><Link to="/cadastro"><Btn size="lg">Assinar agora</Btn></Link><a href="#como"><Btn size="lg" kind="outline">Como funciona</Btn></a></div>
-          </div>
-          <div className="relative">
-            <div className="relative aspect-[4/3]">
-              <span aria-hidden className="absolute left-1/2 top-[8%] aspect-square w-[78%] -translate-x-1/2 rounded-full bg-lime" />
-              <img src={cut(img('car-rav4'))} alt="Toyota RAV4 prata" className="absolute bottom-[8%] left-1/2 w-[96%] -translate-x-1/2 drop-shadow-2xl" />
+      {/* Hero em bloco */}
+      <div className={`${wrap} pt-5`}>
+        <section className="relative overflow-hidden rounded-[32px] bg-royal text-white">
+          <BrandPattern opacity={0.06} />
+          <div className="relative grid items-center gap-6 p-6 sm:p-10 lg:grid-cols-[1.05fr_1fr] lg:p-14">
+            <div>
+              <p className="flex items-center gap-1.5 text-[13px] font-semibold text-lime"><Sparkle size={15} weight="fill" />O plano de saúde do seu carro</p>
+              <h1 className="mt-3 text-[40px] font-extrabold leading-[1.02] tracking-[-.01em] lg:text-[60px]"><i>Facilitar &amp; transformar</i> em rotina a manutenção do seu veículo.</h1>
+              <p className="mt-4 max-w-lg text-[17px] leading-relaxed text-white/85">Alertas no app, oficinas certificadas com desconto e cobertura de até 80 itens.</p>
+              <div className="mt-7 flex flex-wrap gap-3"><Btn size="lg" onClick={() => nav('/cadastro')}>Assinar agora</Btn><a href="#recursos"><Btn size="lg" kind="outline">Ver recursos</Btn></a></div>
             </div>
-            <div className="absolute -bottom-5 left-5 flex items-center gap-3 rounded-3xl bg-surface p-4 text-fg shadow-float">
-              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-lime text-ink"><Bell size={22} weight="fill" /></span>
-              <span><b className="block">Troca de óleo em 500 km</b><span className="text-sm text-muted">Agende com 22% de desconto</span></span>
+            <div className="relative">
+              <span aria-hidden className="absolute left-1/2 top-[6%] aspect-square w-[76%] -translate-x-1/2 rounded-full bg-lime" />
+              <img src={cut(img('car-rav4'))} alt="Toyota RAV4 prata" className="relative mx-auto w-[96%] drop-shadow-2xl" />
+              <div className="absolute bottom-0 left-0 flex items-center gap-3 rounded-[20px] bg-surface p-3 pr-5 text-fg shadow-float">
+                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-lime text-ink"><Bell size={20} weight="fill" /></span>
+                <span><b className="block text-[14px]">Troca de óleo em 500 km</b><span className="text-[12px] text-muted">22% de desconto na Próspera</span></span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      <section className="mx-auto max-w-6xl px-5 py-16">
-        <h2 className="max-w-2xl text-3xl font-extrabold leading-tight lg:text-4xl">Falta de manutenção é uma das principais causas de acidentes de trânsito.</h2>
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          {[['30%', 'dos acidentes têm relação com falta de manutenção'], ['48%', 'dos motoristas não fazem manutenção preventiva'], ['91%', 'acham a previsibilidade de custos muito importante']].map(([n, t]) => (
-            <div key={n} className="rounded-3xl bg-surface p-6"><p className="text-5xl font-extrabold text-royal">{n}</p><p className="mt-2 text-muted">{t}</p></div>))}
+      {/* Números */}
+      <section className={`${wrap} py-14`}>
+        <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr] lg:items-end">
+          <h2 className="text-[32px] font-extrabold leading-[1.1] lg:text-[40px]">Falta de manutenção é uma das principais causas de acidentes.</h2>
+          <div className="grid grid-cols-3 gap-3">
+            {[['30%', 'dos acidentes ligados à falta de manutenção'], ['48%', 'não fazem manutenção preventiva'], ['91%', 'querem custos previsíveis']].map(([n, t]) => (
+              <div key={n} className="rounded-[24px] bg-surface p-4 sm:p-5"><p className="text-[30px] font-extrabold text-royal sm:text-[40px]">{n}</p><p className="mt-1 text-[12px] text-muted sm:text-[13px]">{t}</p></div>))}
+          </div>
         </div>
         <p className="mt-3 text-xs text-muted">Fontes: omecanico.com.br (2022), IBGE (2022) e pesquisa de validação Carrook.</p>
       </section>
 
-      <section id="como" className="bg-navy py-16 text-white">
-        <div className="mx-auto max-w-6xl px-5">
-          <h2 className="text-3xl font-extrabold lg:text-4xl">Como funciona</h2>
-          <ol className="mt-8 grid gap-4 md:grid-cols-3">
-            {([[Car, 'Cadastre seu carro', 'Placa e quilometragem. O app monta o plano de manutenção do seu modelo.'], [Bell, 'Receba os alertas', 'Avisamos antes de cada item vencer, por km ou por tempo.'], [Wrench, 'Agende com desconto', 'Escolha a oficina parceira, pague pelo app e acompanhe o serviço.']] as [Icon, string, string][]).map(([Ic, t, d], i) => (
-              <li key={t} className="rounded-3xl bg-white/10 p-6"><span className="text-sm font-bold text-lime">Passo {i + 1}</span><Ic size={32} className="mt-3" /><b className="mt-3 block text-xl">{t}</b><p className="mt-1 text-white/75">{d}</p></li>))}
-          </ol>
-        </div>
+      {/* Recursos em blocos */}
+      <section id="recursos" className={`${wrap} grid gap-4 lg:grid-cols-2`}>
+        <Bento tone="navy" eyebrow="Alertas de manutenção" title="Manutenção sem esquecer nada" desc="O app segue o manual do seu carro e avisa antes de cada item vencer, por km ou por tempo.">
+          <Mini title="Próximas manutenções">
+            <Row avatar={avatar('car-rav4')} name="Toyota RAV4" sub="Troca de óleo" top="Vence em" bottom="500 km" accent="text-[#9A6200] dark:text-amber" />
+            <Row avatar={avatar('car-fiat500')} name="Fiat 500" sub="Pastilhas de freio" top="Vence em" bottom="12 dias" accent="text-[#9A6200] dark:text-amber" />
+            <Row avatar={avatar('car-crv')} name="Honda CR-V" sub="Revisão de 80 itens" top="Situação" bottom="Em dia" accent="text-ok" />
+          </Mini>
+        </Bento>
+        <Bento tone="lime" eyebrow="Agendamento e pagamento" title="Agende e pague em segundos" desc="Escolha a oficina parceira, veja quanto paga no seu plano e acompanhe o serviço pelo app.">
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] [&>*]:min-w-0">
+            <Mini title="Novo serviço">
+              <Field label="Veículo" caret>{avatar('car-rav4')}Toyota RAV4</Field>
+              <Field label="Serviço" caret>Pastilhas de freio</Field>
+              <Field label="Você paga"><b className="tabular-nums">R$ 179,40</b></Field>
+              <span className="mt-4 flex h-11 items-center justify-center rounded-full bg-slate text-[14px] font-semibold text-white">Agendar e pagar</span>
+            </Mini>
+            <div className="grid content-start gap-3">
+              <Mini><span className="text-[12px] text-muted">Você economiza</span><p className="text-[28px] font-bold">R$ 280<span className="text-muted">,60</span></p>
+                <div className="mt-2 flex flex-wrap gap-1.5"><Pill>Pix</Pill><Pill>6x</Pill><Pill>Débito</Pill></div>
+                <div className="mt-3 border-t border-line pt-3"><Row avatar={<img src={img('shop-mechanic')} alt="" className="h-full w-full object-cover" />} name="Auto Center Próspera" sub="Parceiro certificado" /></div></Mini>
+              <Mini><div className="flex items-center gap-3"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-royal text-white"><Check size={24} weight="bold" /></span><span><b className="block text-[14px]">Agendado com sucesso!</b><span className="text-[12px] text-muted">Qui, 19 nov às 09:30</span></span></div></Mini>
+            </div>
+          </div>
+        </Bento>
+        <Bento tone="violet" className="lg:col-span-2" eyebrow="Saúde e economia" title="Acompanhe a saúde e os gastos do seu carro" desc="Laudo digital depois de cada serviço, histórico do veículo e quanto você já economizou."
+          aside={
+            <div className="grid gap-3 sm:grid-cols-[1fr_1.3fr]">
+              <div className="grid content-start gap-3">
+                <Mini><span className="flex items-center gap-1.5 text-[12px] text-muted"><Heartbeat size={15} weight="fill" className="text-royal" />Saúde do veículo</span><p className="text-[26px] font-bold">87<small className="text-[13px] font-medium text-muted">/100</small></p></Mini>
+                <Mini><span className="flex items-center gap-1.5 text-[12px] text-muted"><ClipboardText size={15} weight="fill" className="text-royal" />Laudo da revisão</span><p className="text-[26px] font-bold">80 itens</p></Mini>
+              </div>
+              <Mini><span className="text-[12px] text-muted">Economia no ano</span><p className="text-[28px] font-bold">R$ 1.240</p>
+                <Bars data={[{ label: 'jun', value: 90 }, { label: 'jul', value: 0 }, { label: 'ago', value: 320 }, { label: 'set', value: 150 }, { label: 'out', value: 230 }, { label: 'nov', value: 450 }]} /></Mini>
+            </div>} />
       </section>
 
-      <section id="planos" className="mx-auto max-w-6xl px-5 py-16">
-        <h2 className="text-3xl font-extrabold lg:text-4xl">Planos</h2>
-        <div className="mt-8 grid gap-4 lg:grid-cols-3">
-          {PLANS.map(p => (
-            <article key={p.id} className={`relative flex flex-col rounded-3xl p-6 ${p.popular ? 'bg-navy text-white' : 'bg-surface'}`}>
-              {p.popular && <span className="absolute -top-3 left-6 rounded-full bg-lime px-3 py-1 text-xs font-bold text-ink">⚡ Popular</span>}
-              <h3 className="text-xl font-bold">{p.name}</h3>
-              <p className="mt-4 text-[40px] font-extrabold leading-none">{brl(prices[p.id]).replace(',00', '')}<small className="text-base font-medium opacity-70">/mês</small></p>
-              <ul className="mt-5 grid flex-1 content-start gap-2">{[...p.perks, `Até ${limits[p.id]} ${limits[p.id] > 1 ? 'veículos' : 'veículo'}`].map(x => <li key={x} className="flex gap-2"><Check size={18} weight="bold" className="mt-0.5 shrink-0 text-lime" />{x}</li>)}</ul>
-              <Link to="/cadastro" className="mt-6"><Btn kind={p.popular ? 'lime' : 'royal'} className="w-full">Assinar {p.short}</Btn></Link>
-            </article>))}
+      {/* Como funciona */}
+      <section className={`${wrap} py-14`}>
+        <h2 className="text-[32px] font-extrabold lg:text-[40px]">Como funciona</h2>
+        <ol className="mt-6 grid gap-3 md:grid-cols-3">
+          {([[Car, 'Cadastre seu carro', 'Placa e quilometragem. O app monta o plano de manutenção do seu modelo.'], [Bell, 'Receba os alertas', 'Avisamos antes de cada item vencer, por km ou por tempo.'], [Wrench, 'Agende com desconto', 'Escolha a oficina parceira, pague pelo app e acompanhe o serviço.']] as [Icon, string, string][]).map(([Ic, t, d], i) => (
+            <li key={t} className="rounded-[24px] bg-surface p-6"><span className="flex items-center justify-between"><span className="grid h-12 w-12 place-items-center rounded-2xl bg-mist text-royal"><Ic size={24} /></span><span className="text-[13px] font-bold text-muted">0{i + 1}</span></span><b className="mt-4 block text-xl">{t}</b><p className="mt-1 text-muted">{d}</p></li>))}
+        </ol>
+      </section>
+
+      {/* Planos */}
+      <section id="planos" className={`${wrap} pb-14`}>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div><h2 className="text-[40px] font-extrabold leading-none lg:text-[56px]">Planos</h2><p className="mt-3 max-w-md text-muted">Cobertura de até 80 itens, oficinas certificadas e descontos em peças e combustível.</p></div>
         </div>
-        <div className="mt-10 overflow-x-auto rounded-3xl bg-surface p-2">
+        <div className="mt-4"><PricingCards cta={(id, dark) => <Btn kind={dark ? 'lime' : 'dark'} size="lg" className="w-full" onClick={() => nav('/cadastro')}>Assinar {PLANS.find(p => p.id === id)!.short}</Btn>} /></div>
+        <div className="mt-8 overflow-x-auto rounded-[24px] bg-surface p-2">
           <table className="w-full min-w-[560px] text-sm">
             <thead><tr className="text-left"><th className="p-3">Comparativo</th><th className="text-center">Carrook</th><th className="text-center text-muted">Outros apps</th><th className="text-center text-muted">Oficina avulsa</th></tr></thead>
             <tbody>{[['Revisão anual gratuita', 1, 1, 0], ['Troca de óleo gratuita', 1, 1, 0], ['Desconto em peças', 1, 0, 0], ['Desconto em combustível', 1, 0, 0], ['Agendamento pelo app', 1, 1, 0], ['Cobertura de até 80 itens', 1, 0, 0]].map(([t, a, b, c]) => (
@@ -98,27 +135,33 @@ export function Landing() {
         </div>
       </section>
 
-      <section className="bg-surface py-16">
-        <div className="mx-auto max-w-6xl px-5">
-          <h2 className="text-3xl font-extrabold">Quem usa, recomenda</h2>
-          <div className="mt-8 grid gap-4 md:grid-cols-3">{[['Me salvou de um problemão! Acharam a correia rachada na revisão.', 'Rafael N., Criciúma'], ['Deixaram meu carro novo, e paguei metade.', 'Júlia M., Içara'], ['Finalmente sei quando trocar o óleo sem precisar lembrar.', 'Carlos S., Forquilhinha']].map(([q, n]) => (
-            <figure key={n} className="rounded-3xl bg-mist p-6"><Stars value={5} /><blockquote className="mt-3 text-lg">“{q}”</blockquote><figcaption className="mt-3 text-sm text-muted">{n}</figcaption></figure>))}</div>
-        </div>
+      {/* Depoimentos */}
+      <section className={`${wrap} pb-14`}>
+        <h2 className="text-[32px] font-extrabold">Quem usa, recomenda</h2>
+        <div className="mt-6 grid gap-3 md:grid-cols-3">{[['Me salvou de um problemão! Acharam a correia rachada na revisão.', 'Rafael N., Criciúma'], ['Deixaram meu carro novo, e paguei metade.', 'Júlia M., Içara'], ['Finalmente sei quando trocar o óleo sem precisar lembrar.', 'Carlos S., Forquilhinha']].map(([q, n]) => (
+          <figure key={n} className="rounded-[24px] bg-surface p-6"><Stars value={5} /><blockquote className="mt-3 text-lg leading-snug">“{q}”</blockquote><figcaption className="mt-3 text-sm text-muted">{n}</figcaption></figure>))}</div>
       </section>
 
-      <section id="duvidas" className="mx-auto max-w-3xl px-5 py-16">
-        <h2 className="text-3xl font-extrabold">Dúvidas frequentes</h2>
-        <div className="mt-6 grid gap-2">{FAQ.map(([q, a], i) => (
-          <div key={q} className="rounded-2xl bg-surface">
+      {/* Dúvidas */}
+      <section id="duvidas" className={`${wrap} grid gap-6 pb-14 lg:grid-cols-[1fr_1.5fr]`}>
+        <h2 className="text-[32px] font-extrabold leading-tight">Dúvidas frequentes</h2>
+        <div className="grid gap-2">{FAQ.map(([q, a], i) => (
+          <div key={q} className="rounded-[20px] bg-surface">
             <button onClick={() => setFaq(faq === i ? null : i)} aria-expanded={faq === i} className="flex w-full items-center justify-between gap-3 p-5 text-left font-semibold">{q}<span className="text-xl text-royal">{faq === i ? '−' : '+'}</span></button>
             {faq === i && <p className="px-5 pb-5 text-muted">{a}</p>}
           </div>))}</div>
       </section>
 
-      <section className="bg-lime py-14 text-ink"><div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6 px-5"><h2 className="text-3xl font-extrabold">Seu carro em dia, sem esforço.</h2><Link to="/cadastro"><Btn size="lg" kind="dark">Criar minha conta</Btn></Link></div></section>
+      {/* CTA */}
+      <div className={`${wrap} pb-14`}>
+        <section className="flex flex-wrap items-center justify-between gap-6 rounded-[32px] bg-lime p-8 text-ink lg:p-12">
+          <div><p className="flex items-center gap-1.5 text-[13px] font-semibold"><Sparkle size={15} weight="fill" />Comece hoje</p><h2 className="mt-2 text-[32px] font-extrabold leading-tight">Seu carro em dia, sem esforço.</h2></div>
+          <Btn size="lg" kind="dark" onClick={() => nav('/cadastro')}>Criar minha conta</Btn>
+        </section>
+      </div>
 
       <footer className="bg-slate py-10 text-white/80">
-        <div className="mx-auto grid max-w-6xl gap-6 px-5 sm:grid-cols-3">
+        <div className={`${wrap} grid gap-6 sm:grid-cols-3`}>
           <div><span className="flex items-center gap-2 text-white"><LogoMark size={24} color="#41D92A" /><Wordmark /></span><p className="mt-2 text-sm">Criciúma, SC</p></div>
           <div className="grid gap-1 text-sm"><span className="flex items-center gap-2"><WhatsappLogo size={16} />+55 48 9 9190-3121</span><span className="flex items-center gap-2"><EnvelopeSimple size={16} />plataformacarrook@gmail.com</span><span className="flex items-center gap-2"><InstagramLogo size={16} />@carrook.app</span></div>
           <div className="grid gap-1 text-sm"><Link to="/termos">Termos de uso</Link><Link to="/privacidade">Política de privacidade</Link><Link to="/bem-vindo">Acessar o app</Link></div>
