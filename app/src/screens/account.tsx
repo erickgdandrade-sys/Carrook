@@ -4,7 +4,7 @@ import { Bell, CalendarCheck, Tag, Gauge as GaugeIcon, GasPump, Check, Car, Crow
 import { CARENCIA_DIAS, FUEL, NOT_COVERED, PLANS, type PlanId } from '../data'
 import { Coverage, RolePicker } from './extra'
 import { brl, carenciaLeft, uid, useStore, type Notice, type Prefs, type Theme } from '../store'
-import { BrandPattern, Btn, LogoMark, PageHead, fmtDate } from '../ui'
+import { BrandPattern, Btn, LogoMark, PageHead, ThemeSwitch, fmtDate } from '../ui'
 
 const N_ICON: Record<Notice['kind'], Icon> = { alerta: Wrench, agenda: CalendarCheck, promo: Tag, km: GaugeIcon }
 
@@ -128,7 +128,7 @@ export function Menu() {
     <div>
       <div className="bg-violet px-5 pb-6 pt-[max(20px,env(safe-area-inset-top))] text-white">
         <div className="flex items-center gap-3"><span className="grid h-14 w-14 place-items-center rounded-full border-2 border-white text-lg font-bold">{s.user.name.split(' ').map(w => w[0]).slice(0, 2).join('')}</span>
-          <div><b className="block text-xl">{s.user.name}</b><span className="text-sm text-white/75">{plan.name}</span></div></div>
+          <div className="flex-1"><b className="block text-xl">{s.user.name}</b><span className="text-sm text-white/75">{plan.name}</span></div><ThemeSwitch /></div>
       </div>
       <div className="mx-5 -mt-0 mt-4 overflow-hidden rounded-3xl bg-surface">
         {ITEMS.map(([to, t, Ic]) => <Link key={to} to={to} className="flex items-center gap-4 border-b border-line px-4 py-4 last:border-0"><Ic size={22} className="text-royal" /><span className="flex-1 font-medium">{t}</span><CaretRight size={18} className="text-muted" /></Link>)}

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Bell, DotsThreeVertical, GasPump, ArrowRight, CalendarBlank, MapPin, Plus, Lightning } from '@phosphor-icons/react'
 import { POSTS, PLANS, SERVICES, cut, type ServiceKey } from '../data'
 import { brl, currentKm, daysSince, fmtKm, healthScore, itemStates, quote, useStore, type Vehicle } from '../store'
-import { Btn, Gauge, ITEM_ICON, LEVEL, LogoMark, Plate, SERVICE_ICON, Section, fmtDate } from '../ui'
+import { ThemeSwitch, Btn, Gauge, ITEM_ICON, LEVEL, LogoMark, Plate, SERVICE_ICON, Section, fmtDate } from '../ui'
 
 const HOME_SERVICES: ServiceKey[] = ['revisao', 'oleo', 'freios', 'alinhamento', 'bateria', 'diagnostico']
 
@@ -30,9 +30,12 @@ export function Home() {
           <Link to="/perfil" className="flex items-center gap-2.5 text-[19px] font-semibold">
             <span className="grid h-9 w-9 place-items-center rounded-full border-2 border-white text-[13px] font-bold">{first[0]}</span>Olá, {first}
           </Link>
-          <Link to="/notificacoes" aria-label={`Notificações${unread ? `, ${unread} novas` : ''}`} className="relative grid h-10 w-10 place-items-center rounded-full bg-white/15 lg:hidden">
-            <Bell size={22} />{unread > 0 && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-violet bg-lime" />}
-          </Link>
+          <div className="flex items-center gap-2.5 lg:hidden">
+            <ThemeSwitch />
+            <Link to="/notificacoes" aria-label={`Notificações${unread ? `, ${unread} novas` : ''}`} className="relative grid h-10 w-10 place-items-center rounded-full bg-white/15">
+              <Bell size={22} />{unread > 0 && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-violet bg-lime" />}
+            </Link>
+          </div>
           <Link to="/plano" className="hidden items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold hover:bg-white/25 lg:flex"><LogoMark size={16} color="#41D92A" />{plan.name}</Link>
         </div>
         <p className="mt-6 hidden max-w-xl text-[40px] font-extrabold leading-[1.05] lg:block">

@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { House, Bell, Wrench, List, Car, CalendarCheck, Gift, Crown, User, ChartLineUp, Storefront, Handshake, type Icon } from '@phosphor-icons/react'
 import { useStore } from './store'
-import { LogoMark, Wordmark } from './ui'
+import { LogoMark, ThemeSwitch, Wordmark } from './ui'
 
 const TABS: [string, string, Icon][] = [['/', 'Início', House], ['/notificacoes', 'Notificações', Bell], ['/oficinas', 'Serviços', Wrench], ['/menu', 'Menu', List]]
 const SIDE: [string, string, Icon][] = [
@@ -33,6 +33,7 @@ export function AppShell() {
             </NavLink>
           ))}
         </nav>
+        <div className="mb-3 flex items-center justify-between rounded-2xl bg-mist px-3 py-2.5 text-sm font-medium text-muted">Modo escuro<ThemeSwitch tone="plain" /></div>
         <div className="rounded-3xl bg-navy p-4 text-white">
           <div className="flex items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-full border-2 border-white/80 text-sm font-bold">{user.name.split(' ').map(w => w[0]).slice(0, 2).join('')}</span>

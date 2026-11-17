@@ -3,7 +3,7 @@ import { NavLink, Outlet, Link } from 'react-router-dom'
 import { ChartLineUp, Kanban, Storefront, Users, Crown, ArrowLeft, ArrowRight, MagnifyingGlass, Plus, type Icon } from '@phosphor-icons/react'
 import { PLANS, SERVICES, img, type PlanId, type ServiceKey } from '../data'
 import { STATUS_FLOW, STATUS_LABEL, SUBSCRIBERS, brl, recommendScore, uid, useStore, type BookingStatus } from '../store'
-import { Btn, LogoMark, Seal, Stars, Wordmark, fmtDate } from '../ui'
+import { Btn, LogoMark, Seal, Stars, ThemeSwitch, Wordmark, fmtDate } from '../ui'
 import { StatusChip } from './bookings'
 
 const NAV: [string, string, Icon][] = [['/admin', 'Visão geral', ChartLineUp], ['/admin/agendamentos', 'Agendamentos', Kanban], ['/admin/oficinas', 'Oficinas', Storefront], ['/admin/assinantes', 'Assinantes', Users], ['/admin/planos', 'Planos', Crown]]
@@ -14,7 +14,7 @@ export function AdminShell() {
       <aside className="sticky top-0 z-30 bg-slate text-white lg:h-screen lg:w-[248px] lg:shrink-0 lg:px-4 lg:py-6">
         <div className="flex items-center justify-between px-5 py-4 lg:mb-8 lg:px-3 lg:py-0">
           <span className="flex items-center gap-2.5"><LogoMark size={26} color="#41D92A" /><Wordmark className="text-lg" /><span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/70">Admin</span></span>
-          <Link to="/" className="flex items-center gap-1 text-sm text-white/70 lg:hidden"><ArrowLeft size={16} />App</Link>
+          <span className="flex items-center gap-3"><ThemeSwitch /><Link to="/" className="flex items-center gap-1 text-sm text-white/70 lg:hidden"><ArrowLeft size={16} />App</Link></span>
         </div>
         <nav className="no-scrollbar flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:p-0" aria-label="Admin">
           {NAV.map(([to, t, Ic]) => (

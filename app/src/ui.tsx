@@ -1,7 +1,7 @@
 import { type ReactNode, type ButtonHTMLAttributes } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  CaretLeft, Drop, Wind, SteeringWheel, Disc, Thermometer, BatteryCharging, Gear, Wrench, Pulse, Star, SealCheck,
+  CaretLeft, Drop, Wind, SteeringWheel, Disc, Thermometer, BatteryCharging, Gear, Wrench, Pulse, Star, SealCheck, Sun, Moon,
   type Icon,
 } from '@phosphor-icons/react'
 import type { ItemKey, ServiceKey } from './data'
@@ -151,3 +151,23 @@ export function Toast() {
 }
 
 export const fmtDate = (iso: string, opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }) => new Date(iso).toLocaleDateString('pt-BR', opts).replace('.', '')
+
+/* ---------- Interruptor claro / escuro ---------- */
+export function ThemeSwitch({ tone = 'color', className = '' }: { tone?: 'color' | 'plain'; className?: string }) {
+  const theme = useStore(s => s.theme)
+  const set = useStore(s => s.set)
+  const sysDark = typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches
+  const dark = theme === 'dark' || (theme === 'system' && sysDark)
+  const track = dark ? 'bg-[#0A0D24] ring-1 ring-white/15' : tone === 'color' ? 'bg-white/25' : 'bg-line'
+  return (
+    <button role="switch" aria-checked={dark} aria-label="Modo escuro" title={dark ? 'Mudar para o modo claro' : 'Mudar para o modo escuro'}
+      onClick={() => set({ theme: dark ? 'light' : 'dark' })}
+      className={`relative h-8 w-[62px] shrink-0 rounded-full transition-colors duration-300 ${track} ${className}`}>
+      <Sun size={14} weight="fill" aria-hidden className={`absolute left-2 top-1/2 -translate-y-1/2 transition-opacity ${dark ? 'text-white/40 opacity-100' : 'opacity-0'}`} />
+      <Moon size={14} weight="fill" aria-hidden className={`absolute right-2 top-1/2 -translate-y-1/2 transition-opacity ${dark ? 'opacity-0' : tone === 'color' ? 'text-white/70' : 'text-muted'}`} />
+      <span className={`absolute top-1 grid h-6 w-6 place-items-center rounded-full bg-white shadow-md transition-all duration-300 ${dark ? 'left-[34px]' : 'left-1'}`}>
+        {dark ? <Moon size={14} weight="fill" className="text-royal" /> : <Sun size={14} weight="fill" className="text-amber" />}
+      </span>
+    </button>
+  )
+}

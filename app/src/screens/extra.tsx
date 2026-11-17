@@ -6,7 +6,7 @@ import {
 } from '@phosphor-icons/react'
 import { COVERAGE, PLANS, POSTS, POST_BODY, SERVICES, cut, img } from '../data'
 import { STATUS_FLOW, STATUS_LABEL, brl, useStore, type ReportMark, type Role } from '../store'
-import { BrandPattern, Btn, LogoMark, PageHead, Seal, Stars, Wordmark, fmtDate } from '../ui'
+import { BrandPattern, Btn, LogoMark, PageHead, Seal, Stars, ThemeSwitch, Wordmark, fmtDate } from '../ui'
 import { StatusChip } from './bookings'
 
 /* =================== Landing page de vendas =================== */
@@ -29,6 +29,7 @@ export function Landing() {
           <nav className="flex items-center gap-2 text-sm font-semibold">
             <a href="#planos" className="hidden px-3 py-2 sm:block">Planos</a>
             <a href="#duvidas" className="hidden px-3 py-2 sm:block">Dúvidas</a>
+            <ThemeSwitch tone="plain" className="mx-1" />
             <Link to="/entrar" className="px-3 py-2">Entrar</Link>
             <Link to="/cadastro" className="rounded-full bg-lime px-4 py-2 text-ink">Assinar</Link>
           </nav>
@@ -272,6 +273,7 @@ export function ShopShell() {
           <div className="flex items-center gap-3 px-5 py-4 lg:px-0 lg:py-0">
             <img src={shop.photo} alt="" className="h-11 w-11 rounded-2xl object-cover" />
             <div className="min-w-0"><b className="block truncate">{shop.name}</b><span className="flex items-center gap-1 text-xs text-white/70"><LogoMark size={11} color="#41D92A" />Portal do parceiro</span></div>
+            <ThemeSwitch className="ml-auto" />
           </div>
           <nav className="no-scrollbar flex gap-1 overflow-x-auto px-3 pb-3 lg:mt-8 lg:flex-col lg:p-0" aria-label="Portal da oficina">
             {PNAV.map(([to, t, Ic]) => <NavLink key={to} to={to} end className={({ isActive }) => `flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${isActive ? 'bg-white/15 text-lime' : 'text-white/75 hover:text-white'}`}><Ic size={20} />{t}</NavLink>)}
